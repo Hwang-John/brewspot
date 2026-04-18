@@ -1,0 +1,35 @@
+name: BrewSpot
+options:
+  bundleIdPrefix: com.hwangjohn
+configs:
+  Debug: debug
+  Release: release
+targets:
+  BrewSpot:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - BrewSpotApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hwangjohn.brewspot
+        INFOPLIST_FILE: BrewSpotApp/Info.plist
+        SWIFT_VERSION: 5.0
+        DEVELOPMENT_TEAM: ""
+    info:
+      path: BrewSpotApp/Info.plist
+      properties:
+        UILaunchScreen: {}
+        CFBundleDisplayName: BrewSpot
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: false
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift.git
+    from: 2.9.1
+targetTemplates:
+  DefaultApp:
+    dependencies:
+      - package: Supabase
+products: []
