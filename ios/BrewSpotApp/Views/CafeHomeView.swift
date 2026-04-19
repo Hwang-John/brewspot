@@ -16,11 +16,13 @@ struct CafeHomeView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                Text("다음 단계에서 카페 목록/상세 화면을 연결합니다.")
+                Text("지도에서 가까운 카페를 찾아보세요.")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .background(Color(.secondarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 14))
+
+                CafeMapView()
 
                 Button("로그아웃") {
                     Task { await sessionStore.signOut() }
