@@ -17,6 +17,8 @@ targets:
         INFOPLIST_FILE: BrewSpotApp/Info.plist
         SWIFT_VERSION: 5.0
         DEVELOPMENT_TEAM: ""
+    dependencies:
+      - package: Supabase
     info:
       path: BrewSpotApp/Info.plist
       properties:
@@ -28,8 +30,4 @@ packages:
   Supabase:
     url: https://github.com/supabase/supabase-swift.git
     from: 2.9.1
-targetTemplates:
-  DefaultApp:
-    dependencies:
-      - package: Supabase
 products: []
