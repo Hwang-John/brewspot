@@ -8,7 +8,7 @@ struct RootView: View {
             if sessionStore.isLoading {
                 ProgressView("불러오는 중...")
             } else if sessionStore.currentUser != nil {
-                CafeHomeView()
+                AppTabView()
             } else {
                 NavigationStack {
                     LoginView()

@@ -12,15 +12,19 @@
 4. 마이페이지 기록
 5. 지역 기반 커뮤니티 확장
 
-주요 문서:
+현재 우선 확인 문서:
 
+- `TODO.md`: 지금 해야 할 일과 완료된 작업 정리
+- `README.md`: 제품/PRD 본문
 - `ONE_PAGER.md`: 대표님 보고용 1페이지 요약
-- `README.md`: 정형화된 PRD 본문
-- `WIREFRAME_SCREENS.md`: 화면 목록 / 와이어프레임 초안
 - `ERD.md`: 데이터 모델 초안
 - `API_SPEC.md`: API 명세 초안
 - `LOGIN_FLOW.md`: 로그인 / 회원가입 / 계정 연결 플로우
 - `SUPABASE_MINI_SCHEMA.sql`: 최소 MVP 기준 DB 초안
+
+보관 문서:
+
+- 예전 체크리스트, 구현 순서, 와이어프레임 초안은 `archive/` 폴더로 이동
 
 이 문서는 제품 방향, MVP 범위, 개발 구조, 로그인/SSO, 보안/개인정보 이슈를 빠르게 의사결정할 수 있게 정리하는 문서다.
 
