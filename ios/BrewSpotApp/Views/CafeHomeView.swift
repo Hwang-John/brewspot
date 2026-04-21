@@ -3,7 +3,7 @@ import SwiftUI
 struct CafeHomeView: View {
     @EnvironmentObject private var sessionStore: SessionStore
     @EnvironmentObject private var bookmarkStore: BookmarkStore
-    private let cafes = Cafe.sampleCafes
+    @EnvironmentObject private var cafeListViewModel: CafeListViewModel
     @State private var searchText = ""
     @State private var selectedCategory = "전체"
 
@@ -23,6 +23,11 @@ struct CafeHomeView: View {
 
                     heroBanner
 
+                    if cafeListViewModel.isLoading {
+                        ProgressView("카페 정보를 불러오는 중...")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
                     discoveryControls
 
                     CafeMapView(cafes: filteredCafes.isEmpty ? cafes : filteredCafes)
@@ -41,7 +46,14 @@ struct CafeHomeView: View {
             }
             .navigationTitle("BrewSpot")
             .background(Color.brewCream.ignoresSafeArea())
+            .task {
+                await cafeListViewModel.loadIfNeeded()
+            }
         }
+    }
+
+    private var cafes: [Cafe] {
+        cafeListViewModel.cafes
     }
 
     private var categories: [String] {
@@ -76,6 +88,10 @@ struct CafeHomeView: View {
             Text("지도에서 가까운 카페를 확인하고, 아래 추천 리스트에서 취향에 맞는 공간을 바로 골라보세요.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+
+            Text("현재 데이터: \(cafeListViewModel.sourceDescription)")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Color.brewBrown)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
@@ -306,4 +322,5 @@ struct CafeHomeView: View {
         .environmentObject(SessionStore())
         .environmentObject(BookmarkStore())
         .environmentObject(ReviewStore())
+        .environmentObject(CafeListViewModel())
 }

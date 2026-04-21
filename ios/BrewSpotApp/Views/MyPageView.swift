@@ -4,8 +4,7 @@ struct MyPageView: View {
     @EnvironmentObject private var sessionStore: SessionStore
     @EnvironmentObject private var bookmarkStore: BookmarkStore
     @EnvironmentObject private var reviewStore: ReviewStore
-
-    private let cafes = Cafe.sampleCafes
+    @EnvironmentObject private var cafeListViewModel: CafeListViewModel
 
     var body: some View {
         NavigationStack {
@@ -23,7 +22,14 @@ struct MyPageView: View {
             }
             .navigationTitle("마이페이지")
             .background(Color.brewCream.ignoresSafeArea())
+            .task {
+                await cafeListViewModel.loadIfNeeded()
+            }
         }
+    }
+
+    private var cafes: [Cafe] {
+        cafeListViewModel.cafes
     }
 
     private var bookmarkedCafes: [Cafe] {
@@ -451,4 +457,5 @@ private struct FlowTagView: View {
         .environmentObject(SessionStore())
         .environmentObject(BookmarkStore())
         .environmentObject(ReviewStore())
+        .environmentObject(CafeListViewModel())
 }

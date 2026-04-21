@@ -24,9 +24,9 @@
 - = GitHub `main` 브랜치 반영 완료
 
 ## 2. 다음에 바로 해야 할 일
-- [ ] Xcode에서 실제 iOS 화면 확인
-- [ ] 홈 / 상세 / 리뷰 / 마이페이지 레이아웃 점검
-- [ ] 앱 실행 중 깨지는 UI나 Preview 오류 수정
+- = Xcode에서 실제 iOS 화면 확인
+- = 홈 / 상세 / 리뷰 / 마이페이지 레이아웃 점검
+- = 앱 실행 중 깨지는 UI나 Preview 오류 수정
 - = 카페 더미 데이터를 더 현실적으로 보강
 
 ## 3. MVP 기능 완성
@@ -45,7 +45,7 @@
 - [ ] `SUPABASE_MINI_SCHEMA.sql` 실행
 - [ ] `cafes`, `reviews`, `bookmarks` 테이블 실제 생성 확인
 - [ ] 더미 UI 데이터를 Supabase 조회 구조로 교체
-- [ ] 카페 목록 조회 Service / ViewModel 분리
+- = 카페 목록 조회 Service / ViewModel 분리
 - [ ] 리뷰 작성 / 저장 기능을 실제 DB와 연결
 
 ## 5. 로그인 확장

@@ -22,4 +22,5 @@ struct AppTabView: View {
         .environmentObject(SessionStore())
         .environmentObject(BookmarkStore())
         .environmentObject(ReviewStore())
+        .environmentObject(CafeListViewModel())
 }
