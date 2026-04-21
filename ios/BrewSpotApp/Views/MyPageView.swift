@@ -56,10 +56,10 @@ struct MyPageView: View {
             )
         }
 
-        return (bookmarkActivities + reviewActivities)
+        let mergedActivities = (bookmarkActivities + reviewActivities)
             .sorted { $0.timestamp > $1.timestamp }
-            .prefix(5)
-            .map { $0 }
+
+        return Array(mergedActivities.prefix(5))
     }
 
     private var profileCard: some View {
