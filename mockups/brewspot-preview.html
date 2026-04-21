@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrewSpot UI Preview</title>
+  <style>
+    :root {
+      --cream: #f7efe6;
+      --latte: #e8d8c7;
+      --brown: #6b422b;
+      --ink: #241a14;
+      --muted: #7b6b60;
+      --card: #fffaf5;
+      --line: #e7d9cd;
+      --accent: #b86a3c;
+      --shadow: 0 18px 40px rgba(68, 42, 27, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "SF Pro Display", "Pretendard", "Apple SD Gothic Neo", sans-serif;
+      background:
+        radial-gradient(circle at top, #fff8f0 0%, #f2e5d6 45%, #ead8c6 100%);
+      color: var(--ink);
+    }
+
+    .page {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    .intro {
+      margin: 0 0 28px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .screens {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      align-items: start;
+    }
+
+    .device {
+      background: #1f1712;
+      border-radius: 34px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .screen {
+      min-height: 760px;
+      background: var(--cream);
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .status {
+      padding: 14px 18px 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .nav {
+      padding: 8px 20px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .nav-icon {
+      color: var(--brown);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .content {
+      padding: 0 18px 22px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 10px 24px rgba(75, 52, 38, 0.05);
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #ead7c5 0%, #f8f0e7 100%);
+    }
+
+    .title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .stack { display: grid; gap: 14px; }
+
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      overflow: hidden;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .chip.active {
+      background: var(--brown);
+      color: white;
+      border-color: var(--brown);
+    }
+
+    .map {
+      height: 260px;
+      position: relative;
+      background:
+        linear-gradient(rgba(255,255,255,0.65), rgba(255,255,255,0.65)),
+        repeating-linear-gradient(45deg, #ddd1c3 0, #ddd1c3 16px, #efe5da 16px, #efe5da 32px);
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .pin {
+      position: absolute;
+      background: white;
+      border-radius: 999px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+    }
+
+    .pin::before {
+      content: "•";
+      color: #d95038;
+      margin-right: 4px;
+      font-size: 18px;
+      vertical-align: middle;
+      line-height: 0;
+    }
+
+    .bottom-sheet {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 16px;
+      font-weight: 700;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .btn.primary {
+      background: var(--brown);
+      color: white;
+    }
+
+    .btn.secondary {
+      background: transparent;
+      color: var(--brown);
+      border: 1px solid var(--brown);
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .section-head h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .bookmark-strip {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 170px;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .list-card, .review-card, .mini-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .tiny {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .tag-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      background: var(--latte);
+      color: var(--ink);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .review-form .field {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .segmented div {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 0;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .segmented .active {
+      background: var(--brown);
+      color: white;
+      border-color: var(--brown);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>BrewSpot Browser Preview</h1>
+    <p class="intro">지금까지 만든 iOS 화면을 브라우저에서 빠르게 확인할 수 있는 목업입니다. 실제 SwiftUI 동작은 아니지만, 홈 탐색, 상세, 리뷰 작성 화면이 어떻게 보일지 한눈에 볼 수 있어요.</p>
+
+    <div class="screens">
+      <section>
+        <div class="device">
+          <div class="screen">
+            <div class="status"><span>9:41</span><span>5G 100%</span></div>
+            <div class="nav">
+              <div class="nav-title">BrewSpot</div>
+              <div class="nav-icon">⌂</div>
+            </div>
+            <div class="content stack">
+              <div>
+                <div class="title">안녕하세요, Brew Lover</div>
+                <p class="sub">coffee@brewspot.app</p>
+              </div>
+
+              <div class="card hero">
+                <div class="title">오늘의 카페 탐색</div>
+                <p class="sub">지도에서 가까운 카페를 확인하고, 검색과 필터로 취향에 맞는 공간을 골라보세요.</p>
+              </div>
+
+              <div class="search">🔍 카페명, 지역, 메뉴로 검색</div>
+
+              <div class="chips">
+                <div class="chip active">전체</div>
+                <div class="chip">로스팅</div>
+                <div class="chip">브런치</div>
+                <div class="chip">스페셜티</div>
+              </div>
+
+              <div class="map">
+                <div class="pin" style="top: 44px; left: 42px;">연남카페</div>
+                <div class="pin" style="top: 98px; left: 186px;">성수커피</div>
+                <div class="pin" style="top: 148px; left: 98px;">망원카페</div>
+                <div class="bottom-sheet">
+                  <div class="card">
+                    <div class="row">
+                      <div>
+                        <div class="title" style="margin-bottom: 4px;">성수커피</div>
+                        <div class="muted">서울 성동구 성수동</div>
+                        <div class="tiny" style="margin-top: 6px;">스페셜티 • 플랫화이트</div>
+                      </div>
+                      <div class="title" style="font-size: 14px; color: var(--brown);">★ 4.8</div>
+                    </div>
+                    <div style="height: 10px;"></div>
+                    <div class="btn primary">상세 보기</div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="section-head">
+                  <h3>저장한 카페</h3>
+                  <div class="count">2곳</div>
+                </div>
+                <div class="bookmark-strip">
+                  <div class="mini-card">
+                    <div class="row">
+                      <strong>성수커피</strong>
+                      <span style="color: var(--brown);">🔖</span>
+                    </div>
+                    <div class="muted" style="margin-top: 8px;">성수 • 스페셜티</div>
+                    <div class="tiny" style="margin-top: 10px; color: var(--brown); font-weight: 700;">플랫화이트</div>
+                  </div>
+                  <div class="mini-card">
+                    <div class="row">
+                      <strong>연남카페</strong>
+                      <span style="color: var(--brown);">🔖</span>
+                    </div>
+                    <div class="muted" style="margin-top: 8px;">연남 • 로스팅</div>
+                    <div class="tiny" style="margin-top: 10px; color: var(--brown); font-weight: 700;">시그니처 라떼</div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="section-head">
+                  <h3>추천 카페</h3>
+                  <div class="count">3곳</div>
+                </div>
+                <div class="stack">
+                  <div class="list-card">
+                    <div class="row">
+                      <div>
+                        <div class="title" style="margin-bottom: 4px;">성수커피</div>
+                        <div class="muted">성수 • 스페셜티</div>
+                      </div>
+                      <div style="text-align: right;">
+                        <div class="title" style="font-size: 14px; color: var(--brown);">★ 4.8</div>
+                        <div class="tiny" style="margin-top: 8px;">🔖 저장됨</div>
+                      </div>
+                    </div>
+                    <p class="sub" style="margin-top: 12px;">균형 잡힌 원두와 차분한 좌석감이 강점인 스페셜티 카페</p>
+                    <div class="meta" style="margin-top: 10px;">
+                      <span>☕ 플랫화이트</span>
+                      <span>1인 7천원대</span>
+                    </div>
+                  </div>
+
+                  <div class="list-card">
+                    <div class="row">
+                      <div>
+                        <div class="title" style="margin-bottom: 4px;">연남카페</div>
+                        <div class="muted">연남 • 로스팅</div>
+                      </div>
+                      <div class="title" style="font-size: 14px; color: var(--brown);">★ 4.6</div>
+                    </div>
+                    <p class="sub" style="margin-top: 12px;">직접 로스팅한 원두 풍미와 밝은 무드가 살아 있는 로스터리</p>
+                    <div class="meta" style="margin-top: 10px;">
+                      <span>☕ 시그니처 라떼</span>
+                      <span>1인 8천원대</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="device">
+          <div class="screen">
+            <div class="status"><span>9:41</span><span>5G 100%</span></div>
+            <div class="nav">
+              <div class="nav-icon">‹</div>
+              <div class="nav-title">카페 상세</div>
+              <div class="nav-icon">🔖</div>
+            </div>
+            <div class="content stack">
+              <div>
+                <div class="tiny" style="color: var(--brown); font-weight: 800; letter-spacing: 0.08em;">SPECIALTY</div>
+                <h2 style="margin: 10px 0 8px; font-size: 30px;">성수커피</h2>
+                <p class="sub">밸런스 좋은 에스프레소와 차분한 좌석 구성이 돋보이는 스페셜티 카페</p>
+                <div class="meta" style="margin-top: 12px;">
+                  <span>★ 4.8</span>
+                  <span>리뷰 128개</span>
+                  <span>1인 7천원대</span>
+                </div>
+              </div>
+
+              <div class="tag-row">
+                <div class="tag">#조용한</div>
+                <div class="tag">#작업하기 좋은</div>
+                <div class="tag">#원두 선택 폭 넓음</div>
+              </div>
+
+              <div class="two-col">
+                <div class="card">
+                  <div class="tiny">대표 메뉴</div>
+                  <div class="title" style="margin-top: 8px;">플랫화이트</div>
+                </div>
+                <div class="card">
+                  <div class="tiny">운영 시간</div>
+                  <div class="title" style="margin-top: 8px;">매일 10:00 - 21:00</div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="title">이런 분께 잘 맞아요</div>
+                <div class="stack" style="margin-top: 12px;">
+                  <div class="muted">✓ 산미와 고소함 균형이 좋아 첫 방문 만족도가 높아요.</div>
+                  <div class="muted">✓ 노트북 좌석이 비교적 넉넉해서 짧은 작업에 적합해요.</div>
+                  <div class="muted">✓ 혼자 방문해도 부담 없는 차분한 분위기예요.</div>
+                </div>
+              </div>
+
+              <div>
+                <div class="title">카페 소개</div>
+                <p class="sub">성수커피는 성수에서 스페셜티 무드를 즐기기 좋은 공간이에요. 대표 메뉴인 플랫화이트를 중심으로, 방문 목적이 분명한 사용자에게 잘 맞는 구성이 보입니다.</p>
+              </div>
+
+              <div class="card">
+                <div class="title">위치 정보</div>
+                <div class="stack" style="margin-top: 10px;">
+                  <div class="muted">📍 서울 성동구 성수동</div>
+                  <div class="muted">📌 37.5445, 127.0561</div>
+                </div>
+              </div>
+
+              <div>
+                <div class="section-head">
+                  <h3>방문자 리뷰</h3>
+                  <div class="count">2개</div>
+                </div>
+                <div class="stack">
+                  <div class="review-card">
+                    <div class="row">
+                      <strong>라떼헌터</strong>
+                      <span class="tiny" style="color: var(--brown); font-weight: 700;">★ 5점</span>
+                    </div>
+                    <p class="sub" style="margin-top: 10px;">플랫화이트 밸런스가 정말 좋고 좌석 간격이 넉넉해서 혼자 머물기 편했어요.</p>
+                    <div class="meta" style="margin-top: 10px;">
+                      <span>☕ 플랫화이트</span>
+                      <span>오늘</span>
+                    </div>
+                  </div>
+                  <div class="review-card">
+                    <div class="row">
+                      <strong>원두메모</strong>
+                      <span class="tiny" style="color: var(--brown); font-weight: 700;">★ 4점</span>
+                    </div>
+                    <p class="sub" style="margin-top: 10px;">산미가 튀지 않고 편하게 마시기 좋아요. 오후 시간대에도 매장이 비교적 차분했어요.</p>
+                    <div class="meta" style="margin-top: 10px;">
+                      <span>☕ 아메리카노</span>
+                      <span>2일 전</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="btn-row">
+                <div class="btn secondary">🔖 저장됨</div>
+                <div class="btn primary">리뷰 쓰기</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="device">
+          <div class="screen">
+            <div class="status"><span>9:41</span><span>5G 100%</span></div>
+            <div class="nav">
+              <div class="nav-icon">취소</div>
+              <div class="nav-title">리뷰 쓰기</div>
+              <div class="nav-icon">등록</div>
+            </div>
+            <div class="content stack review-form">
+              <div class="card hero">
+                <div class="title">성수커피</div>
+                <p class="sub">방문 경험을 간단히 남겨보세요.</p>
+              </div>
+
+              <div>
+                <div class="tiny" style="margin-bottom: 8px;">작성자</div>
+                <div class="field">닉네임</div>
+              </div>
+
+              <div>
+                <div class="tiny" style="margin-bottom: 8px;">평점</div>
+                <div class="segmented">
+                  <div>1점</div>
+                  <div>2점</div>
+                  <div>3점</div>
+                  <div>4점</div>
+                  <div class="active">5점</div>
+                </div>
+              </div>
+
+              <div>
+                <div class="tiny" style="margin-bottom: 8px;">추천 메뉴</div>
+                <div class="field">예: 플랫화이트</div>
+              </div>
+
+              <div>
+                <div class="tiny" style="margin-bottom: 8px;">한 줄 후기</div>
+                <div class="field" style="height: 140px;">방문 경험을 적어주세요</div>
+              </div>
+
+              <div class="btn primary">리뷰 등록</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>
