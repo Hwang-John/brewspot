@@ -147,18 +147,11 @@ struct CafeHomeView: View {
             }
 
             if filteredCafes.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("조건에 맞는 카페가 없어요")
-                        .font(.headline)
-
-                    Text("검색어나 카테고리를 바꾸면 다른 추천 결과를 볼 수 있어요.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(18)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 18))
+                emptyStateCard(
+                    title: "조건에 맞는 카페가 없어요",
+                    message: "검색어를 짧게 바꾸거나 다른 카테고리를 선택하면 더 많은 결과를 볼 수 있어요.",
+                    systemImage: "magnifyingglass"
+                )
             } else {
                 ForEach(filteredCafes) { cafe in
                     NavigationLink {
@@ -186,18 +179,11 @@ struct CafeHomeView: View {
             }
 
             if bookmarkedCafes.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("아직 저장한 카페가 없어요")
-                        .font(.headline)
-
-                    Text("카페 상세나 추천 카드에서 북마크를 누르면 여기에 모여요.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(18)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 18))
+                emptyStateCard(
+                    title: "아직 저장한 카페가 없어요",
+                    message: "추천 카드나 카페 상세에서 저장 버튼을 누르면 관심 카페가 여기에 모여요.",
+                    systemImage: "bookmark"
+                )
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 14) {
@@ -294,10 +280,30 @@ struct CafeHomeView: View {
         }
         .buttonStyle(.plain)
     }
+
+    private func emptyStateCard(title: String, message: String, systemImage: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.title3)
+                .foregroundStyle(Color.brewBrown)
+
+            Text(title)
+                .font(.headline)
+
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+    }
 }
 
 #Preview {
     CafeHomeView()
         .environmentObject(SessionStore())
         .environmentObject(BookmarkStore())
+        .environmentObject(ReviewStore())
 }

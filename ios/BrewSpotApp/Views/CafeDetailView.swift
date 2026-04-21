@@ -2,14 +2,10 @@ import SwiftUI
 
 struct CafeDetailView: View {
     @EnvironmentObject private var bookmarkStore: BookmarkStore
+    @EnvironmentObject private var reviewStore: ReviewStore
+    @EnvironmentObject private var sessionStore: SessionStore
     let cafe: Cafe
-    @State private var reviews: [CafeReview]
     @State private var isPresentingReviewComposer = false
-
-    init(cafe: Cafe) {
-        self.cafe = cafe
-        _reviews = State(initialValue: CafeReview.samples(for: cafe))
-    }
 
     var body: some View {
         ScrollView {
@@ -38,11 +34,15 @@ struct CafeDetailView: View {
         }
         .background(Color.brewCream.ignoresSafeArea())
         .sheet(isPresented: $isPresentingReviewComposer) {
-            ReviewComposerView(cafeName: cafe.name) { review in
-                reviews.insert(review, at: 0)
+            ReviewComposerView(cafeName: cafe.name, initialNickname: sessionStore.currentUser?.nickname ?? "") { review in
+                reviewStore.addReview(review, for: cafe)
             }
             .presentationDetents([.medium, .large])
         }
+    }
+
+    private var reviews: [CafeReview] {
+        reviewStore.reviews(for: cafe)
     }
 
     private var heroSection: some View {
@@ -205,7 +205,7 @@ struct CafeDetailView: View {
                     HStack {
                         Label(review.recommendedMenu, systemImage: "cup.and.saucer.fill")
                         Spacer()
-                        Text(review.createdAt)
+                        Text(review.relativeCreatedAt)
                     }
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -238,5 +238,7 @@ struct CafeDetailView: View {
             openHours: "매일 10:00 - 21:00"
         )
     )
+    .environmentObject(SessionStore())
     .environmentObject(BookmarkStore())
+    .environmentObject(ReviewStore())
 }

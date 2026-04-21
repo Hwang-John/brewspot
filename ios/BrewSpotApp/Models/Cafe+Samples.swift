@@ -19,6 +19,22 @@ extension Cafe {
             openHours: "매일 10:00 - 21:00"
         ),
         Cafe(
+            name: "레이어드빈 성수",
+            address: "서울 성동구 연무장길 23",
+            category: "디저트",
+            city: "성수",
+            latitude: 37.5458,
+            longitude: 127.0552,
+            rating: 4.7,
+            reviewCount: 81,
+            priceNote: "1인 9천원대",
+            signatureMenu: "바닐라빈 라떼",
+            shortDescription: "층고 높은 공간감과 디저트 조합이 강점인 성수 감성 카페",
+            vibeTags: ["디저트 맛집", "사진이 잘 나오는", "대화하기 좋은"],
+            features: ["좌석이 넉넉해 2~3인 방문 만족도가 높아요.", "디저트와 커피 조합이 좋아 첫 방문 만족감이 커요.", "주말 오후에는 대기가 있을 수 있어요."],
+            openHours: "매일 11:00 - 22:00"
+        ),
+        Cafe(
             name: "연남카페",
             address: "서울 마포구 연남동",
             category: "로스팅",
@@ -35,6 +51,22 @@ extension Cafe {
             openHours: "매일 11:00 - 22:00"
         ),
         Cafe(
+            name: "골목필터 연남",
+            address: "서울 마포구 동교로38길 18",
+            category: "필터커피",
+            city: "연남",
+            latitude: 37.5638,
+            longitude: 126.9261,
+            rating: 4.7,
+            reviewCount: 66,
+            priceNote: "1인 8천원대",
+            signatureMenu: "에티오피아 핸드드립",
+            shortDescription: "필터 커피 선택 폭이 넓고 조용히 머물기 좋은 연남 골목 카페",
+            vibeTags: ["조용한", "핸드드립", "혼자 가기 좋은"],
+            features: ["원두 설명이 친절해서 취향 탐색에 좋아요.", "혼자 앉기 좋은 바 좌석이 있어요.", "대화보다는 커피 맛에 집중하기 좋은 분위기예요."],
+            openHours: "월-토 12:00 - 20:30"
+        ),
+        Cafe(
             name: "망원카페",
             address: "서울 마포구 망원동",
             category: "브런치",
@@ -49,6 +81,22 @@ extension Cafe {
             vibeTags: ["브런치", "주말 방문", "친구와 가기 좋은"],
             features: ["식사와 커피를 한 번에 해결하기 편해요.", "테이블 간격이 적당해 모임에 좋아요.", "오전 시간대 방문 만족도가 높아요."],
             openHours: "화-일 09:00 - 20:00"
+        ),
+        Cafe(
+            name: "포인트오브뷰 망원",
+            address: "서울 마포구 포은로 91",
+            category: "작업형",
+            city: "망원",
+            latitude: 37.5552,
+            longitude: 126.9031,
+            rating: 4.4,
+            reviewCount: 58,
+            priceNote: "1인 7천원대",
+            signatureMenu: "오트 라떼",
+            shortDescription: "넓은 테이블과 차분한 소음도로 작업 수요가 높은 망원 카페",
+            vibeTags: ["작업하기 좋은", "노트북 친화", "오래 머물기 좋은"],
+            features: ["콘센트 좌석이 있어 작업 목적 방문이 많아요.", "오트 라떼와 디카페인 옵션 만족도가 좋아요.", "피크타임엔 노트북 좌석 경쟁이 있을 수 있어요."],
+            openHours: "매일 10:30 - 21:30"
         )
     ]
 }

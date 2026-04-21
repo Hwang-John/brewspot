@@ -4,12 +4,20 @@ struct ReviewComposerView: View {
     @Environment(\.dismiss) private var dismiss
 
     let cafeName: String
+    let initialNickname: String
     let onSubmit: (CafeReview) -> Void
 
-    @State private var nickname = ""
+    @State private var nickname: String
     @State private var selectedRating = 5
     @State private var recommendedMenu = ""
     @State private var visitNote = ""
+
+    init(cafeName: String, initialNickname: String = "", onSubmit: @escaping (CafeReview) -> Void) {
+        self.cafeName = cafeName
+        self.initialNickname = initialNickname
+        self.onSubmit = onSubmit
+        _nickname = State(initialValue: initialNickname)
+    }
 
     var body: some View {
         NavigationStack {
@@ -80,5 +88,5 @@ struct ReviewComposerView: View {
 }
 
 #Preview {
-    ReviewComposerView(cafeName: "성수커피") { _ in }
+    ReviewComposerView(cafeName: "성수커피", initialNickname: "브루러버") { _ in }
 }
