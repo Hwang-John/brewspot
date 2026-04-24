@@ -1,122 +1,82 @@
 # BrewSpot Supabase 최소 구축 가이드
 
+최종 기준일: 2026-04-24
+
 ## 목적
 
-이 문서는 BrewSpot 최소 MVP를 Supabase로 바로 시작하기 위한 가장 짧은 구축 가이드다.
+이 문서는 현재 BrewSpot MVP를 실제 Supabase 프로젝트에 반영할 때 필요한 가장 짧은 순서를 정리한다.
 
----
+## 1. 현재 로컬에서 준비 완료된 것
 
-## 1. 먼저 만들 것
+1. `SUPABASE_MINI_SCHEMA.sql`
+2. `SUPABASE_VERIFY.sql`
+3. `SUPABASE_CAFE_SEED.sql`
+4. `SUPABASE_REVIEW_SEED_TEMPLATE.sql`
+5. `CAFE_SEED_TEMPLATE.csv`
+6. `REVIEW_SEED_TEMPLATE.csv`
 
-- [ ] Supabase 프로젝트 생성
-- [ ] `SUPABASE_MINI_SCHEMA.sql` 실행
-- [ ] Auth 로그인 방식 정리
-- [ ] 카페 더미 데이터 입력
-- [ ] Storage 필요 여부 결정
+## 2. 지금 Supabase에서 해야 할 일
 
----
-
-## 2. 프로젝트 생성
-
-1. Supabase 로그인
-2. `New project`
-3. 프로젝트 이름: `brewspot`
-4. Database password 설정
-5. Region 선택
-6. 생성 완료까지 대기
-
----
-
-## 3. SQL 실행
-
-1. Supabase 왼쪽 메뉴 `SQL Editor`
-2. `New query`
-3. `SUPABASE_MINI_SCHEMA.sql` 전체 붙여넣기
-4. `Run`
-
-실행 후 확인:
-
-```sql
-select table_name
-from information_schema.tables
-where table_schema = 'public'
-order by table_name;
-```
-
-정상이라면 최소 아래 테이블이 보여야 함:
-
-1. `users`
-2. `user_identities`
-3. `cafes`
-4. `reviews`
-5. `bookmarks`
-
----
-
-## 4. Auth 설정
-
-### 1차 추천
-
-- [ ] Email
-- [ ] Google
-- [ ] Apple
-
-### 2차 추천
-
-- [ ] Kakao
-- [ ] Naver 보류
-
-설명:
-
-- Gmail 로그인은 실제로는 Google 로그인으로 처리하면 된다.
-- iOS 앱에서 Google 같은 서드파티 로그인을 제공하면 App Store 제출 전 Apple 로그인도 함께 준비하는 편이 안전하다.
-- Kakao는 2차 확장으로 두고, Naver는 Custom OAuth/OIDC 설정 부담 때문에 이번 버전에서는 보류한다.
-
-> [AI 추가 제안]
-> 기획상 `메일 + Kakao + Gmail + Naver`를 유지하더라도, 실제 첫 구현은 `이메일 + Google`부터 시작하는 것이 훨씬 쉽다. Kakao/Naver는 한국 사용자 친화적이지만 초기 연동 난이도는 더 높다.
-
----
-
-## 5. 카페 더미 데이터 넣기
-
-초기에는 수동 입력 또는 CSV 업로드가 가장 현실적이다.
-
-권장 방식:
-
-1. `CAFE_SEED_TEMPLATE.csv` 작성
-2. Supabase `Table Editor` 또는 SQL로 입력
-
-예시 SQL:
-
-```sql
-insert into cafes (
-  name,
-  address,
-  latitude,
-  longitude,
-  signature_menu_name,
-  signature_menu_price
-) values
-  ('카페 A', '서울 성동구 ...', 37.0, 127.0, '플랫화이트', 5500),
-  ('카페 B', '서울 마포구 ...', 37.1, 126.9, '바닐라라떼', 6000);
-```
-
----
-
-## 6. 지금 당장 해야 할 최소 순서
-
-1. Supabase 프로젝트 생성
+1. Supabase 프로젝트 생성 또는 기존 프로젝트 확인
 2. `SUPABASE_MINI_SCHEMA.sql` 실행
-3. `cafes` 테이블에 카페 10개 입력
-4. Email 로그인 켜기
-5. Google 로그인 가능 여부 검토
+3. `SUPABASE_VERIFY.sql` 실행
+4. `SUPABASE_CAFE_SEED.sql`로 카페 24개 입력
+5. 테스트 계정 준비 후 리뷰 36개 입력
+6. Email / Google / Apple Auth Provider 설정 확인
 
----
+## 3. Auth 기준
 
-## 7. 다음 단계
+### 1차 지원
 
-- [ ] 카페 30개 채우기
-- [ ] 리뷰 더미 데이터 10개 만들기
-- [ ] 로그인 화면 구현
-- [ ] 지도 화면 구현
-- [ ] 카페 상세 화면 구현
+1. Email
+2. Google
+3. Apple
+
+### 2차 이후
+
+1. Kakao
+2. Naver 보류
+
+## 4. 카페 시드 기준
+
+현재 기준:
+
+1. 지역 3곳: 성수 / 연남 / 망원
+2. 총 24개 카페
+3. 카페 정보 필수 필드 전부 채움
+
+적용 파일:
+
+1. `CAFE_SEED_TEMPLATE.csv`
+2. `SUPABASE_CAFE_SEED.sql`
+
+## 5. 리뷰 시드 기준
+
+현재 기준:
+
+1. 총 36개 리뷰
+2. 3개 리뷰 카페 6곳
+3. 2개 리뷰 카페 6곳
+4. 1개 리뷰 카페 6곳
+5. 리뷰 0개 유지 카페 6곳
+
+적용 파일:
+
+1. `REVIEW_SEED_TEMPLATE.csv`
+2. `SUPABASE_REVIEW_SEED_TEMPLATE.sql`
+
+## 6. 실제 적용 순서
+
+1. Supabase `SQL Editor`에서 `SUPABASE_MINI_SCHEMA.sql` 실행
+2. `SUPABASE_VERIFY.sql` 실행해서 테이블 / 컬럼 / 정책 확인
+3. `SUPABASE_CAFE_SEED.sql` 실행
+4. 테스트 계정 준비
+5. `REVIEW_SEED_TEMPLATE.csv` 또는 `SUPABASE_REVIEW_SEED_TEMPLATE.sql`로 리뷰 입력
+6. iOS 앱에서 카페 조회 / 리뷰 / 북마크 흐름 확인
+
+## 7. 지금 남은 검증 항목
+
+1. RLS 정책이 앱 요청과 충돌 없는지 확인
+2. Google Provider 콘솔 설정 확인
+3. Apple Provider 콘솔 설정 확인
+4. 시드 입력 후 지도와 상세 화면 데이터가 기대대로 보이는지 확인

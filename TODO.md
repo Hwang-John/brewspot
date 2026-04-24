@@ -34,6 +34,7 @@
 - = 브라우저용 UI 목업 파일 추가
 - = 로그인/운영/시드/Supabase 검증 문서 정리
 - = 개인정보처리방침 / 이용약관 / 위치정보 처리 기준안 정리
+- = ONE_PAGER / LOGIN_FLOW / ERD / README / API_SPEC / 백엔드 / Supabase 문서 기준선 정리
 - = GitHub `main` 브랜치 반영 완료
 
 ## 2. 지금 바로 확인해야 할 것
@@ -56,6 +57,7 @@
 - = `CAFE_SEED_TEMPLATE.csv` 카페 시드 템플릿 보강
 - = `REVIEW_SEED_TEMPLATE.csv` 리뷰 시드 템플릿 추가
 - = `OPERATIONS_SEED_PLAN.md` 운영/시드 기준 문서 추가
+- = Supabase 퍼블릭 조회 연결 확인 (`cafes`, `reviews`, `bookmarks` 응답 확인)
 
 외부 확인 필요:
 - [ ] Supabase 프로젝트에 최신 `SUPABASE_MINI_SCHEMA.sql` 실제 반영
@@ -63,6 +65,8 @@
 - [ ] 카페 시드 24개 이상 실제 입력
 - [ ] 테스트 리뷰 36개 이상 실제 입력
 - [ ] RLS 정책이 iOS 앱 요청 흐름과 충돌 없는지 검증
+- [ ] 현재 Supabase `cafes` 응답은 9개로 확인되어 목표 24개와 불일치
+- [ ] 현재 Supabase 리뷰 데이터에 legacy / 최신 형식이 혼재하는지 정리 필요
 
 ## 4. 로그인 확장 상태
 
@@ -77,12 +81,14 @@
 - = Apple 로그인은 iOS 앱에서 Google 같은 서드파티 로그인을 제공할 때 App Store 제출 전 대응 항목으로 본다.
 - = Kakao 로그인은 2차 우선순위로 추가한다.
 - = Naver 로그인은 이번 버전에서는 보류한다.
+- = Supabase Auth 설정 확인 결과 `email=true`, `disable_signup=false`, `mailer_autoconfirm=false`
 
 남은 일:
 - [ ] Google Provider 콘솔 설정값 최종 확정
 - [ ] Apple Provider 콘솔 설정값 최종 확정
 - [ ] 실제 로그인 성공/실패 케이스별 메시지 점검
 - [ ] Kakao 로그인 추가 여부를 MVP 이후 작업으로 분리
+- [ ] Supabase Auth 설정 기준 현재 `google=false`, `apple=false` 상태라 Provider 활성화 필요
 
 ## 5. 운영 준비
 
@@ -122,8 +128,9 @@
 - [ ] 고급 추천 엔진
 
 ## 추천 작업 순서
-1. Xcode에서 이메일 / Google / Apple 로그인 실제 동작 확인
-2. 카페 조회 / 북마크 / 리뷰 작성 end-to-end 검증
-3. Supabase 최신 스키마 반영 및 `SUPABASE_VERIFY.sql` 실행
-4. 카페 24개 / 리뷰 36개 시드 실제 입력
-5. 운영 정책 및 출시 문서 마무리
+1. Supabase 최신 스키마 반영 및 `SUPABASE_VERIFY.sql` 실행
+2. 카페 24개 / 리뷰 36개 시드 실제 입력
+3. Google / Apple Provider 활성화와 테스트 계정 준비
+4. Xcode에서 이메일 / Google / Apple 로그인 실제 동작 확인
+5. 카페 조회 / 북마크 / 리뷰 작성 end-to-end 검증
+6. 운영 정책 및 출시 문서 마무리

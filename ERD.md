@@ -1,37 +1,31 @@
-# BrewSpot ERD 초안
+# BrewSpot ERD 기준안
+
+최종 기준일: 2026-04-24
 
 ## 1. 목적
 
-이 문서는 BrewSpot MVP 기준의 데이터 모델 초안이다.  
-회원, 카페, 리뷰, 커뮤니티, 홈바리스타, 관리자 운영에 필요한 핵심 엔터티만 포함한다.
+이 문서는 현재 BrewSpot MVP에서 실제로 쓰는 데이터 구조와, 2차 이후 확장 후보를 분리해서 정리한다.
 
----
+## 2. 현재 MVP 테이블
 
-## 2. ERD 개요
+현재 구현/스키마 기준 핵심 테이블은 아래 5개다.
+
+1. `users`
+2. `user_identities`
+3. `cafes`
+4. `reviews`
+5. `bookmarks`
+
+## 3. 현재 MVP ERD
 
 ```mermaid
 erDiagram
   USERS ||--o{ USER_IDENTITIES : has
-  USERS ||--o{ USER_PREFERENCES : has
-  USERS ||--o{ BOOKMARKS : saves
   USERS ||--o{ REVIEWS : writes
-  USERS ||--o{ VISIT_LOGS : records
-  USERS ||--o{ COMMUNITY_POSTS : writes
-  USERS ||--o{ COMMUNITY_COMMENTS : writes
-  USERS ||--o{ HOMEBARISTA_POSTS : writes
-  USERS ||--o{ REPORTS : submits
+  USERS ||--o{ BOOKMARKS : saves
 
-  CAFES ||--o{ CAFE_MENUS : has
   CAFES ||--o{ REVIEWS : receives
   CAFES ||--o{ BOOKMARKS : saved_by
-  CAFES ||--o{ VISIT_LOGS : visited_in
-  CAFES ||--o{ RANK_SNAPSHOTS : ranked_in
-
-  REVIEWS ||--o{ REVIEW_IMAGES : has
-  COMMUNITY_POSTS ||--o{ COMMUNITY_COMMENTS : has
-  COMMUNITY_POSTS ||--o{ REPORTS : reported
-  HOMEBARISTA_POSTS ||--o{ REPORTS : reported
-  REVIEWS ||--o{ REPORTS : reported
 
   USERS {
     uuid id PK
@@ -39,7 +33,6 @@ erDiagram
     string email
     string profile_image_url
     string status
-    boolean marketing_opt_in
     datetime created_at
     datetime updated_at
   }
@@ -53,63 +46,37 @@ erDiagram
     datetime linked_at
   }
 
-  USER_PREFERENCES {
-    uuid id PK
-    uuid user_id FK
-    string roast_preference
-    string flavor_preference
-    string visit_purpose
-    string preferred_region
-    datetime updated_at
-  }
-
   CAFES {
     uuid id PK
     string name
     string address
+    string category
+    string city
     float latitude
     float longitude
-    string phone
-    string opening_hours
-    string status
+    string signature_menu_name
+    int signature_menu_price
+    string price_note
+    string short_description
+    string[] vibe_tags
+    string[] features
+    string open_hours
     float avg_rating
     int review_count
     datetime created_at
     datetime updated_at
   }
 
-  CAFE_MENUS {
-    uuid id PK
-    uuid cafe_id FK
-    string name
-    int price
-    boolean signature_yn
-    string category
-    datetime created_at
-  }
-
   REVIEWS {
     uuid id PK
     uuid user_id FK
     uuid cafe_id FK
+    string author_nickname
     int overall_rating
-    int taste_rating
-    int mood_rating
-    int price_rating
-    int work_friendly_rating
+    string recommended_menu_name
     string content
-    string visit_purpose
-    string status
     datetime created_at
     datetime updated_at
-  }
-
-  REVIEW_IMAGES {
-    uuid id PK
-    uuid review_id FK
-    string image_url
-    int sort_order
-    datetime created_at
   }
 
   BOOKMARKS {
@@ -118,154 +85,63 @@ erDiagram
     uuid cafe_id FK
     datetime created_at
   }
-
-  VISIT_LOGS {
-    uuid id PK
-    uuid user_id FK
-    uuid cafe_id FK
-    string drink_name
-    int price
-    datetime visited_at
-    string memo
-    datetime created_at
-  }
-
-  COMMUNITY_POSTS {
-    uuid id PK
-    uuid user_id FK
-    string category
-    string title
-    string content
-    string status
-    int like_count
-    int comment_count
-    datetime created_at
-    datetime updated_at
-  }
-
-  COMMUNITY_COMMENTS {
-    uuid id PK
-    uuid post_id FK
-    uuid user_id FK
-    string content
-    string status
-    datetime created_at
-  }
-
-  HOMEBARISTA_POSTS {
-    uuid id PK
-    uuid user_id FK
-    string title
-    string content
-    string bean_name
-    string recipe
-    string brew_tool
-    string image_url
-    string status
-    datetime created_at
-    datetime updated_at
-  }
-
-  REPORTS {
-    uuid id PK
-    uuid reporter_user_id FK
-    string target_type
-    uuid target_id
-    string reason
-    string status
-    datetime created_at
-    datetime processed_at
-  }
-
-  RANK_SNAPSHOTS {
-    uuid id PK
-    uuid cafe_id FK
-    string ranking_type
-    string region_code
-    int rank
-    float score
-    date snapshot_date
-  }
 ```
 
----
-
-## 3. 핵심 테이블 설명
+## 4. 현재 MVP 테이블 설명
 
 ### users
 
-- 서비스 사용자 기본 프로필
-- 닉네임, 이메일, 상태, 마케팅 동의 여부 저장
+1. 서비스 사용자 프로필 기본 테이블
+2. 닉네임, 이메일, 상태, 프로필 이미지 URL 보관
 
 ### user_identities
 
-- SSO 연동 정보 저장
-- 한 명의 사용자가 여러 로그인 제공자를 연결할 수 있게 설계
-- `provider`: `apple`, `google`, `kakao`, `email`
+1. 로그인 제공자 연결 정보 저장
+2. 현재 provider는 `email`, `google`, `apple` 기준으로 사용
+3. `provider + provider_user_id`는 unique 기준
 
 ### cafes
 
-- 카페 기본 정보
-- 지도, 상세 페이지, 추천, 랭킹의 기준 테이블
-
-### cafe_menus
-
-- 메뉴명, 가격, 시그니처 여부 저장
+1. 지도와 상세 화면에 필요한 카페 정보 저장
+2. 카테고리, 지역, 대표 메뉴, 가격대, 소개, 태그, 운영 시간 포함
+3. `avg_rating`, `review_count`는 리뷰 기준 집계
 
 ### reviews
 
-- 카페 평가 핵심 테이블
-- 종합 평점 외에 맛/분위기/가격/작업 적합도 등 구조화 점수 저장
+1. 카페 리뷰 저장
+2. 현재 MVP는 `overall_rating`, `recommended_menu_name`, `content` 중심
+3. 맛/분위기/가격 세부 평점과 이미지 업로드는 아직 미반영
 
-### visit_logs
+### bookmarks
 
-- 마이페이지의 "내가 마신 커피 기록"
-- 별점 없는 개인 기록도 남길 수 있게 분리
+1. 사용자가 저장한 카페 관계 테이블
+2. `user_id + cafe_id` unique 기준
 
-### community_posts
-
-- 자유게시판, 지역 추천, 질문/답변 등 커뮤니티 게시글
-
-### homebarista_posts
-
-- 홈바리스타 전용 게시물
-- 추출 레시피, 원두, 장비 정보 저장
-
-### reports
-
-- 신고 대상 공통 관리
-- `target_type`: `review`, `community_post`, `comment`, `homebarista_post`, `market_item`
-
----
-
-## 4. 주요 인덱스 권장안
-
-1. `user_identities(provider, provider_user_id)` unique
-2. `cafes(latitude, longitude)` geo index
-3. `reviews(cafe_id, created_at desc)`
-4. `reviews(user_id, created_at desc)`
-5. `bookmarks(user_id, created_at desc)`
-6. `visit_logs(user_id, visited_at desc)`
-7. `community_posts(category, created_at desc)`
-8. `rank_snapshots(region_code, ranking_type, snapshot_date, rank)`
-
----
-
-## 5. 제약 조건 권장안
+## 5. 현재 제약 조건 기준
 
 1. `users.nickname` unique
-2. `bookmarks(user_id, cafe_id)` unique
-3. `user_identities(provider, provider_user_id)` unique
-4. `reviews.overall_rating` 1~5 제한
-5. 삭제 대신 `status` 기반 soft delete 권장
+2. `user_identities(provider, provider_user_id)` unique
+3. `bookmarks(user_id, cafe_id)` unique
+4. `reviews.overall_rating`은 1~5
+5. `cafes(name, address)` unique index 기준으로 upsert
 
----
+## 6. 현재 문서와 스키마 연결
 
-## 6. MVP 이후 확장 후보
+1. 실제 스키마 기준 문서는 `SUPABASE_MINI_SCHEMA.sql`
+2. 스키마 반영 여부 확인은 `SUPABASE_VERIFY.sql`
+3. 시드 기준 문서는 `CAFE_SEED_TEMPLATE.csv`, `REVIEW_SEED_TEMPLATE.csv`
 
-1. `market_items`
-2. `market_transactions`
-3. `notifications`
-4. `follows`
-5. `cafe_owners`
-6. `cafe_claim_requests`
+## 7. 2차 이후 확장 후보
+
+현재 구현에는 없지만 이후 확장 후보는 아래와 같다.
+
+1. `user_preferences`
+2. `cafe_menus`
+3. `review_images`
+4. `visit_logs`
+5. `community_posts`
+6. `community_comments`
+7. `homebarista_posts`
+8. `reports`
+9. `rank_snapshots`
+10. `audit_logs`

@@ -1,362 +1,172 @@
-# BrewSpot API 명세 초안
+# BrewSpot 데이터/API 기준안
+
+최종 기준일: 2026-04-24
 
 ## 1. 목적
 
-이 문서는 BrewSpot MVP 기준 API 초안이다.  
-실제 구현 시 REST 기준으로 시작하며, 인증은 Bearer Token 기반을 가정한다.
+현재 BrewSpot MVP는 iOS 앱이 Supabase를 직접 사용하는 구조다.  
+이 문서는 별도 REST 서버가 있다고 가정한 장기 명세가 아니라, 현재 앱이 실제로 다루는 리소스와 동등한 데이터 계약을 정리한다.
 
-Base URL 예시:
+## 2. 현재 인증 계약
 
-```text
-https://api.brewspot.app/v1
+### 이메일 로그인
+
+입력:
+
+```json
+{
+  "email": "user@example.com",
+  "password": "password"
+}
 ```
 
----
+처리:
 
-## 2. 인증
+1. Supabase Auth 로그인
+2. 사용자 프로필 보장 로직 실행
+3. 세션 저장
 
-### `POST /auth/login/sso`
+### 이메일 회원가입
 
-소셜 로그인 토큰으로 로그인 또는 회원가입 처리
+입력:
 
-Request
+```json
+{
+  "nickname": "brew_jane",
+  "email": "user@example.com",
+  "password": "password"
+}
+```
+
+### Google / Apple 로그인
+
+1. 앱에서 OAuth 시작
+2. Supabase Auth OAuth 완료
+3. 사용자 프로필 보장 로직 실행
+
+## 3. 현재 사용자 리소스
+
+### `users`
+
+```json
+{
+  "id": "uuid",
+  "nickname": "brew_jane",
+  "email": "user@example.com",
+  "profileImageUrl": null,
+  "status": "active"
+}
+```
+
+### `user_identities`
 
 ```json
 {
   "provider": "google",
-  "idToken": "token_value",
-  "accessToken": "optional_access_token",
-  "nonce": "optional_nonce"
+  "providerUserId": "provider_user_id",
+  "providerEmail": "user@example.com"
 }
 ```
 
-Response
+## 4. 현재 카페 리소스
+
+### 카페 목록 / 상세
 
 ```json
 {
-  "user": {
-    "id": "uuid",
-    "nickname": "brew_jane",
-    "email": "relay@example.com",
-    "profileImageUrl": null
-  },
-  "tokens": {
-    "accessToken": "jwt",
-    "refreshToken": "refresh_jwt"
-  },
-  "isNewUser": true
+  "id": "uuid",
+  "name": "대니스수퍼마켓",
+  "address": "서울 성동구 연무장15길 11",
+  "category": "디저트",
+  "city": "성수",
+  "latitude": 37.5428358,
+  "longitude": 127.0589363,
+  "signatureMenuName": "대니스츄 플레인",
+  "signatureMenuPrice": 4500,
+  "priceNote": "1인 1만원대",
+  "shortDescription": "츄러스와 디저트를 중심으로 성수 골목 감성이 살아 있는 카페",
+  "vibeTags": ["디저트 맛집", "사진이 잘 나오는", "친구와 가기 좋은"],
+  "features": ["츄러스류 메뉴 반응이 좋음", "성수 메인 골목 접근성이 좋음"],
+  "openHours": "매일 11:00 - 22:00",
+  "avgRating": 4.7,
+  "reviewCount": 3
 }
 ```
 
-### `POST /auth/login/email`
+현재 지원 조회 기준:
 
-이메일 로그인
+1. 카페 목록
+2. 카페 상세
+3. 홈 검색
+4. 카테고리 필터
 
-### `POST /auth/signup/email`
+현재 미지원:
 
-이메일 회원가입
+1. 현재 위치 기반 nearby API
+2. 랭킹 API
+3. 메뉴 전용 API
 
-### `POST /auth/refresh`
+## 5. 현재 리뷰 리소스
 
-리프레시 토큰 재발급
-
-### `POST /auth/logout`
-
-로그아웃 처리
-
-### `POST /auth/link-identity`
-
-기존 계정에 Apple/Google/Kakao 추가 연결
-
-### `DELETE /auth/unlink-identity/{provider}`
-
-로그인 연동 해제
-
----
-
-## 3. 사용자
-
-### `GET /users/me`
-
-내 정보 조회
-
-### `PATCH /users/me`
-
-내 프로필 수정
-
-### `GET /users/me/preferences`
-
-취향 정보 조회
-
-### `PUT /users/me/preferences`
-
-취향 정보 수정
-
-### `GET /users/me/bookmarks`
-
-저장한 카페 목록 조회
-
-### `GET /users/me/visit-logs`
-
-내 커피 기록 조회
-
-### `POST /users/me/visit-logs`
-
-내 커피 기록 등록
-
-### `DELETE /users/me`
-
-회원 탈퇴
-
----
-
-## 4. 카페
-
-### `GET /cafes`
-
-카페 목록 조회
-
-Query 예시:
-
-- `lat`
-- `lng`
-- `radius`
-- `region`
-- `keyword`
-- `filters`
-- `sort`
-
-Response
+### 리뷰 작성 입력
 
 ```json
 {
-  "items": [
-    {
-      "id": "uuid",
-      "name": "브루스팟 성수",
-      "address": "서울 성동구 ...",
-      "latitude": 37.0,
-      "longitude": 127.0,
-      "avgRating": 4.5,
-      "reviewCount": 128,
-      "tags": ["스페셜티", "작업하기좋은곳"]
-    }
-  ],
-  "page": 1,
-  "size": 20,
-  "total": 312
-}
-```
-
-### `GET /cafes/{cafeId}`
-
-카페 상세 조회
-
-### `GET /cafes/{cafeId}/menus`
-
-카페 메뉴 조회
-
-### `POST /cafes/{cafeId}/bookmark`
-
-카페 저장
-
-### `DELETE /cafes/{cafeId}/bookmark`
-
-카페 저장 취소
-
----
-
-## 5. 리뷰
-
-### `GET /cafes/{cafeId}/reviews`
-
-카페 리뷰 목록 조회
-
-### `POST /cafes/{cafeId}/reviews`
-
-리뷰 작성
-
-Request
-
-```json
-{
+  "authorNickname": "브루러버",
   "overallRating": 5,
-  "tasteRating": 5,
-  "moodRating": 4,
-  "priceRating": 4,
-  "workFriendlyRating": 5,
-  "visitPurpose": "work",
-  "content": "조용하고 라떼 맛이 좋았어요.",
-  "imageUrls": [
-    "https://cdn.example.com/review/1.jpg"
-  ]
+  "recommendedMenuName": "플랫화이트",
+  "content": "조용하고 커피 밸런스가 좋았어요."
 }
 ```
 
-### `PATCH /reviews/{reviewId}`
-
-리뷰 수정
-
-### `DELETE /reviews/{reviewId}`
-
-리뷰 삭제
-
-### `POST /reviews/{reviewId}/report`
-
-리뷰 신고
-
----
-
-## 6. 추천 및 랭킹
-
-### `GET /recommendations/nearby`
-
-근처 카페 추천
-
-### `GET /recommendations/trending`
-
-요즘 뜨는 카페
-
-### `GET /rankings`
-
-랭킹 조회
-
-Query 예시:
-
-- `type=regional`
-- `type=trending`
-- `type=signature-latte`
-- `region=seoul-seongsu`
-
----
-
-## 7. 커뮤니티
-
-### `GET /community/posts`
-
-게시글 목록 조회
-
-### `POST /community/posts`
-
-게시글 작성
-
-### `GET /community/posts/{postId}`
-
-게시글 상세 조회
-
-### `PATCH /community/posts/{postId}`
-
-게시글 수정
-
-### `DELETE /community/posts/{postId}`
-
-게시글 삭제
-
-### `POST /community/posts/{postId}/comments`
-
-댓글 작성
-
-### `POST /community/posts/{postId}/report`
-
-게시글 신고
-
----
-
-## 8. 홈바리스타
-
-### `GET /homebarista/posts`
-
-홈바리스타 피드 조회
-
-### `POST /homebarista/posts`
-
-홈바리스타 게시글 작성
-
-### `GET /homebarista/posts/{postId}`
-
-홈바리스타 게시글 상세
-
-### `POST /homebarista/posts/{postId}/report`
-
-신고
-
----
-
-## 9. 파일 업로드
-
-### `POST /files/presign`
-
-리뷰 이미지/프로필 이미지 업로드용 presigned URL 발급
-
-Request
+### 리뷰 조회 응답 예시
 
 ```json
 {
-  "type": "review-image",
-  "fileName": "latte.jpg",
-  "contentType": "image/jpeg"
+  "id": "uuid",
+  "userId": "uuid",
+  "cafeId": "uuid",
+  "authorNickname": "브루러버",
+  "overallRating": 5,
+  "recommendedMenuName": "플랫화이트",
+  "content": "조용하고 커피 밸런스가 좋았어요.",
+  "createdAt": "2026-04-24T09:00:00+09:00"
 }
 ```
 
-Response
+현재 미지원:
+
+1. 구조화 세부 평점
+2. 리뷰 이미지 업로드
+3. 리뷰 수정 / 삭제 UI
+4. 리뷰 신고 API
+
+## 6. 현재 북마크 리소스
+
+입력:
 
 ```json
 {
-  "uploadUrl": "https://storage.example.com/...",
-  "fileUrl": "https://cdn.example.com/..."
+  "userId": "uuid",
+  "cafeId": "uuid"
 }
 ```
 
----
+동작:
 
-## 10. 관리자 API
+1. 북마크 저장
+2. 북마크 해제
+3. 마이페이지 저장 목록 조회
 
-### `GET /admin/reports`
+## 7. 2차 이후 확장 API 후보
 
-신고 목록 조회
+1. 근처 추천
+2. 랭킹
+3. 커뮤니티 게시판
+4. 홈바리스타 피드
+5. 리뷰 신고 / 운영 신고
+6. 계정 연결 / 해제 API
 
-### `PATCH /admin/reports/{reportId}`
+## 8. 현재 결론
 
-신고 처리 상태 변경
-
-### `POST /admin/cafes`
-
-카페 등록
-
-### `PATCH /admin/cafes/{cafeId}`
-
-카페 수정
-
-### `DELETE /admin/cafes/{cafeId}`
-
-카페 비활성화
-
-### `GET /admin/users`
-
-사용자 목록 조회
-
-### `PATCH /admin/users/{userId}/status`
-
-사용자 제재
-
----
-
-## 11. 에러 응답 형식
-
-```json
-{
-  "code": "INVALID_TOKEN",
-  "message": "유효하지 않은 로그인 토큰입니다.",
-  "traceId": "req-1234"
-}
-```
-
----
-
-## 12. 보안 체크
-
-1. 모든 소셜 토큰은 서버 검증
-2. presigned URL 업로드는 파일 타입 검증 필요
-3. 관리자 API는 별도 role 체크
-4. 리뷰/게시글 작성 API에 rate limit 필요
-5. 탈퇴 API는 재인증 요구 권장
+현재는 `직접 Supabase 연동 구조`를 기준으로 보고, 별도 백엔드 API 명세는 2차 확장 시점에 다시 구체화한다.
