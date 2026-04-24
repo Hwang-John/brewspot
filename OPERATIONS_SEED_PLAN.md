@@ -121,7 +121,8 @@
 리뷰 반영 파일:
 
 1. `REVIEW_SEED_TEMPLATE.csv`
-2. `SUPABASE_REVIEW_SEED_TEMPLATE.sql`
+2. `SUPABASE_REVIEW_SEED.sql`
+3. `SUPABASE_REVIEW_SEED_TEMPLATE.sql`
 
 ## 5. 최소 운영 정책 확정
 
@@ -138,5 +139,5 @@ MVP 운영 정책은 아래만 먼저 고정한다.
 ## 6. 실입력 전 체크
 
 1. Supabase `cafes` 테이블에 `SUPABASE_CAFE_SEED.sql` 적용
-2. 테스트 계정 준비 후 `REVIEW_SEED_TEMPLATE.csv` 또는 `SUPABASE_REVIEW_SEED_TEMPLATE.sql` 적용
+2. 테스트 계정 준비 후 `SUPABASE_REVIEW_SEED.sql` 또는 `REVIEW_SEED_TEMPLATE.csv` 적용
 3. 지도 화면에서 좌표와 카테고리 표기가 기대대로 보이는지 확인

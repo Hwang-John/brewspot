@@ -11,7 +11,7 @@
 1. `SUPABASE_MINI_SCHEMA.sql`
 2. `SUPABASE_VERIFY.sql`
 3. `SUPABASE_CAFE_SEED.sql`
-4. `SUPABASE_REVIEW_SEED_TEMPLATE.sql`
+4. `SUPABASE_REVIEW_SEED.sql`
 5. `CAFE_SEED_TEMPLATE.csv`
 6. `REVIEW_SEED_TEMPLATE.csv`
 
@@ -63,7 +63,8 @@
 적용 파일:
 
 1. `REVIEW_SEED_TEMPLATE.csv`
-2. `SUPABASE_REVIEW_SEED_TEMPLATE.sql`
+2. `SUPABASE_REVIEW_SEED.sql`
+3. `SUPABASE_REVIEW_SEED_TEMPLATE.sql`
 
 ## 6. 실제 적용 순서
 
@@ -71,7 +72,7 @@
 2. `SUPABASE_VERIFY.sql` 실행해서 테이블 / 컬럼 / 정책 확인
 3. `SUPABASE_CAFE_SEED.sql` 실행
 4. 테스트 계정 준비
-5. `REVIEW_SEED_TEMPLATE.csv` 또는 `SUPABASE_REVIEW_SEED_TEMPLATE.sql`로 리뷰 입력
+5. `SUPABASE_REVIEW_SEED.sql` 또는 `REVIEW_SEED_TEMPLATE.csv`로 리뷰 입력
 6. iOS 앱에서 카페 조회 / 리뷰 / 북마크 흐름 확인
 
 ## 7. 지금 남은 검증 항목
