@@ -34,11 +34,10 @@
 - = 브라우저용 UI 목업 파일 추가
 - = 로그인/운영/시드/Supabase 검증 문서 정리
 - = 개인정보처리방침 / 이용약관 / 위치정보 처리 기준안 정리
-- = 로컬 Git 커밋 완료 (`7b07bb0`)
+- = GitHub `main` 브랜치 반영 완료
 
 ## 2. 지금 바로 확인해야 할 것
 - = Xcode 시뮬레이터에서 앱 전체 실행 확인
-- [ ] GitHub 인증 후 `origin/main` push
 - [ ] 이메일 로그인 후 홈 진입, 카페 조회, 리뷰 작성, 북마크 동작 검증
 - [ ] Google 로그인 redirect / URL scheme / Supabase Provider 설정 실검증
 - [ ] Apple 로그인 redirect / Bundle 설정 / Supabase Provider 설정 실검증
