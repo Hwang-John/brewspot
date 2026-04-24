@@ -1,18 +1,27 @@
 import SwiftUI
 
 struct ReviewComposerView: View {
+    struct Submission {
+        let authorName: String
+        let rating: Int
+        let recommendedMenu: String
+        let visitNote: String
+    }
+
     @Environment(\.dismiss) private var dismiss
 
     let cafeName: String
     let initialNickname: String
-    let onSubmit: (CafeReview) -> Void
+    let onSubmit: (Submission) async throws -> Void
 
     @State private var nickname: String
     @State private var selectedRating = 5
     @State private var recommendedMenu = ""
     @State private var visitNote = ""
+    @State private var isSubmitting = false
+    @State private var errorMessage: String?
 
-    init(cafeName: String, initialNickname: String = "", onSubmit: @escaping (CafeReview) -> Void) {
+    init(cafeName: String, initialNickname: String = "", onSubmit: @escaping (Submission) async throws -> Void) {
         self.cafeName = cafeName
         self.initialNickname = initialNickname
         self.onSubmit = onSubmit
@@ -54,29 +63,50 @@ struct ReviewComposerView: View {
             .background(Color.brewCream)
             .navigationTitle("리뷰 쓰기")
             .navigationBarTitleDisplayMode(.inline)
+            .alert("리뷰 등록에 실패했어요", isPresented: Binding(
+                get: { errorMessage != nil },
+                set: { if !$0 { errorMessage = nil } }
+            )) {
+                Button("확인", role: .cancel) {}
+            } message: {
+                Text(errorMessage ?? "잠시 후 다시 시도해주세요.")
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("취소") {
                         dismiss()
                     }
+                    .disabled(isSubmitting)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("등록") {
-                        onSubmit(
-                            CafeReview(
-                                authorName: nickname.trimmingCharacters(in: .whitespacesAndNewlines),
-                                rating: selectedRating,
-                                visitNote: visitNote.trimmingCharacters(in: .whitespacesAndNewlines),
-                                recommendedMenu: recommendedMenu.trimmingCharacters(in: .whitespacesAndNewlines),
-                                createdAt: "방금"
-                            )
-                        )
-                        dismiss()
+                        Task {
+                            await submit()
+                        }
                     }
-                    .disabled(isSubmitDisabled)
+                    .disabled(isSubmitDisabled || isSubmitting)
                 }
             }
+        }
+    }
+
+    private func submit() async {
+        isSubmitting = true
+        defer { isSubmitting = false }
+
+        do {
+            try await onSubmit(
+                Submission(
+                    authorName: nickname.trimmingCharacters(in: .whitespacesAndNewlines),
+                    rating: selectedRating,
+                    recommendedMenu: recommendedMenu.trimmingCharacters(in: .whitespacesAndNewlines),
+                    visitNote: visitNote.trimmingCharacters(in: .whitespacesAndNewlines)
+                )
+            )
+            dismiss()
+        } catch {
+            errorMessage = "서버에 리뷰를 저장하지 못했어요."
         }
     }
 

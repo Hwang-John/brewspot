@@ -1,0 +1,477 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		00A7E3993FFDFB8A89812375 /* CafeReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 033F13EE2C1E5B50887EE86F /* CafeReview.swift */; };
+		020C582A3C493CC58F872A11 /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE2BC8A4D21BFF77CDBFA47 /* SignUpView.swift */; };
+		3A1AF59477FC1DBC7F4255BE /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CAADD421AF947C1CB8A2FDB /* AuthService.swift */; };
+		3D06666350774F5A63200A5C /* UserProfileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEC1939AB2535EF7A03F3041 /* UserProfileService.swift */; };
+		455B96D7187930F5AE966966 /* Cafe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7C08DCFF80B7CD9CA1AD08D /* Cafe.swift */; };
+		50D4A5822BB58AC0E8AECD47 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 964BCC21D703BF48F5BAD452 /* Supabase */; };
+		515C69ACE6FCF9BDFDEC8D37 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BDDD5FAF0DE23C50287E5D4 /* AppConfig.swift */; };
+		51FEAD85FB1437DDEE6BB509 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19B816D8A7B9729949CF53FB /* SessionStore.swift */; };
+		6BF9478836B2545352330D53 /* ReviewService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 658A6426274A25FBE5D50621 /* ReviewService.swift */; };
+		6F8887BF23F5E030CE315BDB /* MyPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DDB9B944779125B4F2E0D77 /* MyPageView.swift */; };
+		7C3E759901E567CC112D2C88 /* SupabaseClientProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8817C2CE6EE309196312F9A5 /* SupabaseClientProvider.swift */; };
+		7ECAD62FF2E90DC2986C7D1E /* BrewSpotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D40AE83B6CF293829974EC91 /* BrewSpotApp.swift */; };
+		865FB7E28ED10C575BD7968C /* CafeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7491FD846FF0563E2BC24BEA /* CafeDetailView.swift */; };
+		8B9DE3586E53EC95BFD9483C /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B87BEBB794C3CAF101F7490 /* AuthViewModel.swift */; };
+		97B88EB9674A7FFB02CCF891 /* CafeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8357CD33CD52DF52F3EC95CB /* CafeService.swift */; };
+		9917E5577FD05D3D435A611A /* AppUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1587383EA3C28C9C0431A7E3 /* AppUser.swift */; };
+		9F207A29A552D074C2270BD4 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 630875C8A2DFC9501F4A82E6 /* RootView.swift */; };
+		A45C8475BC18AF8D38C92DD0 /* BookmarkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4473BC98CB3A59DBBB6DADD9 /* BookmarkService.swift */; };
+		A5B28DB6B68A7F071429FC0A /* AppTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33A8D7EEE8493CA8951287F4 /* AppTabView.swift */; };
+		A8E6AC74B0D9FCB6F055BF20 /* ReviewComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F36922D2830F2360926BF6 /* ReviewComposerView.swift */; };
+		B84CBF6216CC0309FA9F68B2 /* Color+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 480CBE5CF2D83878994C522E /* Color+Theme.swift */; };
+		BB10189746BD7F75F751DD1F /* CafeListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E130F9067A4C28F6AB6BA4 /* CafeListViewModel.swift */; };
+		BE160C2F244D5C4B625DF58F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3224FE9764E7E6D41102DBBF /* LoginView.swift */; };
+		D1D8BB228714E263D642D274 /* CafeHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F83139B7921C58B9CF480BEE /* CafeHomeView.swift */; };
+		D522290CFFA46000FB66EFD6 /* Cafe+Samples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE2D3140E4F673168858F9D /* Cafe+Samples.swift */; };
+		DB3ACC872A749C8F31565F7A /* CafeMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA610901534873D361D9BA03 /* CafeMapView.swift */; };
+		E3402C16EEF4A3D1C21A852B /* ReviewStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C41A512F37B80F62B1D57BF /* ReviewStore.swift */; };
+		E8D0BEED37326496FC918264 /* BookmarkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63C7D75FBFE7F38E1DF11B41 /* BookmarkStore.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		033F13EE2C1E5B50887EE86F /* CafeReview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CafeReview.swift; sourceTree = "<group>"; };
+		1587383EA3C28C9C0431A7E3 /* AppUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUser.swift; sourceTree = "<group>"; };
+		19B816D8A7B9729949CF53FB /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		1AE2D3140E4F673168858F9D /* Cafe+Samples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Cafe+Samples.swift"; sourceTree = "<group>"; };
+		1DDB9B944779125B4F2E0D77 /* MyPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyPageView.swift; sourceTree = "<group>"; };
+		25F36922D2830F2360926BF6 /* ReviewComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewComposerView.swift; sourceTree = "<group>"; };
+		3224FE9764E7E6D41102DBBF /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		33A8D7EEE8493CA8951287F4 /* AppTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTabView.swift; sourceTree = "<group>"; };
+		3B87BEBB794C3CAF101F7490 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		4473BC98CB3A59DBBB6DADD9 /* BookmarkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkService.swift; sourceTree = "<group>"; };
+		480CBE5CF2D83878994C522E /* Color+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Theme.swift"; sourceTree = "<group>"; };
+		4CAADD421AF947C1CB8A2FDB /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		630875C8A2DFC9501F4A82E6 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		63C7D75FBFE7F38E1DF11B41 /* BookmarkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkStore.swift; sourceTree = "<group>"; };
+		658A6426274A25FBE5D50621 /* ReviewService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewService.swift; sourceTree = "<group>"; };
+		6BE2BC8A4D21BFF77CDBFA47 /* SignUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpView.swift; sourceTree = "<group>"; };
+		6D3821C9D01DF63A66BEEA53 /* BrewSpot.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BrewSpot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7491FD846FF0563E2BC24BEA /* CafeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CafeDetailView.swift; sourceTree = "<group>"; };
+		8357CD33CD52DF52F3EC95CB /* CafeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CafeService.swift; sourceTree = "<group>"; };
+		83E130F9067A4C28F6AB6BA4 /* CafeListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CafeListViewModel.swift; sourceTree = "<group>"; };
+		8817C2CE6EE309196312F9A5 /* SupabaseClientProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseClientProvider.swift; sourceTree = "<group>"; };
+		8C41A512F37B80F62B1D57BF /* ReviewStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewStore.swift; sourceTree = "<group>"; };
+		9BDDD5FAF0DE23C50287E5D4 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		D40AE83B6CF293829974EC91 /* BrewSpotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewSpotApp.swift; sourceTree = "<group>"; };
+		DA610901534873D361D9BA03 /* CafeMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CafeMapView.swift; sourceTree = "<group>"; };
+		DCCFC25AFC83BD550376BAA8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		DEC1939AB2535EF7A03F3041 /* UserProfileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileService.swift; sourceTree = "<group>"; };
+		F7C08DCFF80B7CD9CA1AD08D /* Cafe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cafe.swift; sourceTree = "<group>"; };
+		F83139B7921C58B9CF480BEE /* CafeHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CafeHomeView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9EB01D54C8BD1766A300172C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				50D4A5822BB58AC0E8AECD47 /* Supabase in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3B900E934E0D06517F47BC1E /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				4CAADD421AF947C1CB8A2FDB /* AuthService.swift */,
+				4473BC98CB3A59DBBB6DADD9 /* BookmarkService.swift */,
+				8357CD33CD52DF52F3EC95CB /* CafeService.swift */,
+				658A6426274A25FBE5D50621 /* ReviewService.swift */,
+				8817C2CE6EE309196312F9A5 /* SupabaseClientProvider.swift */,
+				DEC1939AB2535EF7A03F3041 /* UserProfileService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		4236567FC7AAFE7CE167D395 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				9BDDD5FAF0DE23C50287E5D4 /* AppConfig.swift */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		5866B16A82CB89C2549EA804 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6D3821C9D01DF63A66BEEA53 /* BrewSpot.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5AA1843720738E3219096EA1 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				1587383EA3C28C9C0431A7E3 /* AppUser.swift */,
+				F7C08DCFF80B7CD9CA1AD08D /* Cafe.swift */,
+				1AE2D3140E4F673168858F9D /* Cafe+Samples.swift */,
+				033F13EE2C1E5B50887EE86F /* CafeReview.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		947FCCA6A29381B54E58C9DE /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				3B87BEBB794C3CAF101F7490 /* AuthViewModel.swift */,
+				63C7D75FBFE7F38E1DF11B41 /* BookmarkStore.swift */,
+				83E130F9067A4C28F6AB6BA4 /* CafeListViewModel.swift */,
+				8C41A512F37B80F62B1D57BF /* ReviewStore.swift */,
+				19B816D8A7B9729949CF53FB /* SessionStore.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		9DAE716C15D8E8AB75C405D4 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				33A8D7EEE8493CA8951287F4 /* AppTabView.swift */,
+				7491FD846FF0563E2BC24BEA /* CafeDetailView.swift */,
+				F83139B7921C58B9CF480BEE /* CafeHomeView.swift */,
+				DA610901534873D361D9BA03 /* CafeMapView.swift */,
+				3224FE9764E7E6D41102DBBF /* LoginView.swift */,
+				1DDB9B944779125B4F2E0D77 /* MyPageView.swift */,
+				25F36922D2830F2360926BF6 /* ReviewComposerView.swift */,
+				630875C8A2DFC9501F4A82E6 /* RootView.swift */,
+				6BE2BC8A4D21BFF77CDBFA47 /* SignUpView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E62E5A44822B185605E42725 /* BrewSpotApp */ = {
+			isa = PBXGroup;
+			children = (
+				D40AE83B6CF293829974EC91 /* BrewSpotApp.swift */,
+				DCCFC25AFC83BD550376BAA8 /* Info.plist */,
+				4236567FC7AAFE7CE167D395 /* Config */,
+				EF0C9BC3750166655A0E51B0 /* Extensions */,
+				5AA1843720738E3219096EA1 /* Models */,
+				3B900E934E0D06517F47BC1E /* Services */,
+				947FCCA6A29381B54E58C9DE /* ViewModels */,
+				9DAE716C15D8E8AB75C405D4 /* Views */,
+			);
+			path = BrewSpotApp;
+			sourceTree = "<group>";
+		};
+		EF0C9BC3750166655A0E51B0 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				480CBE5CF2D83878994C522E /* Color+Theme.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		FC097C7B430EAB2CC099E3C9 = {
+			isa = PBXGroup;
+			children = (
+				E62E5A44822B185605E42725 /* BrewSpotApp */,
+				5866B16A82CB89C2549EA804 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5B650692F49CC5C222904881 /* BrewSpot */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 50993680B0A2E20672784B79 /* Build configuration list for PBXNativeTarget "BrewSpot" */;
+			buildPhases = (
+				A4874EC3C70F5BAED6EC9C0F /* Sources */,
+				9EB01D54C8BD1766A300172C /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BrewSpot;
+			packageProductDependencies = (
+				964BCC21D703BF48F5BAD452 /* Supabase */,
+			);
+			productName = BrewSpot;
+			productReference = 6D3821C9D01DF63A66BEEA53 /* BrewSpot.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2AA90201E9B7F5BA3ECDE38E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					5B650692F49CC5C222904881 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = 1A7B7E2B528C9936CCFE80DD /* Build configuration list for PBXProject "BrewSpot" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = FC097C7B430EAB2CC099E3C9;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				79C811A47EE35E95624AE7E3 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5866B16A82CB89C2549EA804 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5B650692F49CC5C222904881 /* BrewSpot */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A4874EC3C70F5BAED6EC9C0F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				515C69ACE6FCF9BDFDEC8D37 /* AppConfig.swift in Sources */,
+				A5B28DB6B68A7F071429FC0A /* AppTabView.swift in Sources */,
+				9917E5577FD05D3D435A611A /* AppUser.swift in Sources */,
+				3A1AF59477FC1DBC7F4255BE /* AuthService.swift in Sources */,
+				8B9DE3586E53EC95BFD9483C /* AuthViewModel.swift in Sources */,
+				A45C8475BC18AF8D38C92DD0 /* BookmarkService.swift in Sources */,
+				E8D0BEED37326496FC918264 /* BookmarkStore.swift in Sources */,
+				7ECAD62FF2E90DC2986C7D1E /* BrewSpotApp.swift in Sources */,
+				D522290CFFA46000FB66EFD6 /* Cafe+Samples.swift in Sources */,
+				455B96D7187930F5AE966966 /* Cafe.swift in Sources */,
+				865FB7E28ED10C575BD7968C /* CafeDetailView.swift in Sources */,
+				D1D8BB228714E263D642D274 /* CafeHomeView.swift in Sources */,
+				BB10189746BD7F75F751DD1F /* CafeListViewModel.swift in Sources */,
+				DB3ACC872A749C8F31565F7A /* CafeMapView.swift in Sources */,
+				00A7E3993FFDFB8A89812375 /* CafeReview.swift in Sources */,
+				97B88EB9674A7FFB02CCF891 /* CafeService.swift in Sources */,
+				B84CBF6216CC0309FA9F68B2 /* Color+Theme.swift in Sources */,
+				BE160C2F244D5C4B625DF58F /* LoginView.swift in Sources */,
+				6F8887BF23F5E030CE315BDB /* MyPageView.swift in Sources */,
+				A8E6AC74B0D9FCB6F055BF20 /* ReviewComposerView.swift in Sources */,
+				6BF9478836B2545352330D53 /* ReviewService.swift in Sources */,
+				E3402C16EEF4A3D1C21A852B /* ReviewStore.swift in Sources */,
+				9F207A29A552D074C2270BD4 /* RootView.swift in Sources */,
+				51FEAD85FB1437DDEE6BB509 /* SessionStore.swift in Sources */,
+				020C582A3C493CC58F872A11 /* SignUpView.swift in Sources */,
+				7C3E759901E567CC112D2C88 /* SupabaseClientProvider.swift in Sources */,
+				3D06666350774F5A63200A5C /* UserProfileService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		286893810C6C9CC96AF3D09E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		2C7C9E514ACAEA0B520EDE0A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = BrewSpotApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hwangjohn.brewspot;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		706695F6A2528BA1F891399A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = BrewSpotApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hwangjohn.brewspot;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F5D348E93F02C6834D69ECA4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1A7B7E2B528C9936CCFE80DD /* Build configuration list for PBXProject "BrewSpot" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F5D348E93F02C6834D69ECA4 /* Debug */,
+				286893810C6C9CC96AF3D09E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		50993680B0A2E20672784B79 /* Build configuration list for PBXNativeTarget "BrewSpot" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				706695F6A2528BA1F891399A /* Debug */,
+				2C7C9E514ACAEA0B520EDE0A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		79C811A47EE35E95624AE7E3 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		964BCC21D703BF48F5BAD452 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 79C811A47EE35E95624AE7E3 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 2AA90201E9B7F5BA3ECDE38E /* Project object */;
+}

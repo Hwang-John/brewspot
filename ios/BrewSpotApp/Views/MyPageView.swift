@@ -22,8 +22,10 @@ struct MyPageView: View {
             }
             .navigationTitle("마이페이지")
             .background(Color.brewCream.ignoresSafeArea())
-            .task {
+            .task(id: sessionStore.currentUser?.id) {
                 await cafeListViewModel.loadIfNeeded()
+                await bookmarkStore.refresh()
+                await reviewStore.refreshMyReviews(using: cafeListViewModel.cafes)
             }
         }
     }
@@ -37,11 +39,11 @@ struct MyPageView: View {
     }
 
     private var myReviewItems: [ReviewStore.SavedReviewItem] {
-        reviewStore.allSavedReviews()
+        reviewStore.myReviews
     }
 
     private var recentActivityItems: [RecentActivityItem] {
-        let bookmarkActivities = bookmarkedCafes.compactMap { cafe in
+        let bookmarkActivities: [RecentActivityItem] = bookmarkedCafes.compactMap { cafe in
             guard let date = bookmarkStore.bookmarkedAt(cafe) else { return nil }
             return RecentActivityItem(
                 title: cafe.name,
@@ -166,7 +168,7 @@ struct MyPageView: View {
                 )
             } else {
                 ForEach(myReviewItems) { item in
-                    if let cafe = cafe(named: item.cafeName) {
+                    if let cafe = cafe(id: item.cafeID) {
                         NavigationLink {
                             CafeDetailView(cafe: cafe)
                         } label: {
@@ -252,8 +254,8 @@ struct MyPageView: View {
         Array(Set(bookmarkedCafes.map(\.category))).sorted()
     }
 
-    private func cafe(named cafeName: String) -> Cafe? {
-        cafes.first { $0.name == cafeName }
+    private func cafe(id: UUID) -> Cafe? {
+        cafes.first { $0.id == id }
     }
 
     private func summaryCard(title: String, value: String, caption: String, systemImage: String) -> some View {

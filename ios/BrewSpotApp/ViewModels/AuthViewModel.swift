@@ -51,4 +51,32 @@ final class AuthViewModel: ObservableObject {
             return false
         }
     }
+
+    func signInWithGoogle(sessionStore: SessionStore) async {
+        errorMessage = nil
+        infoMessage = nil
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            try await authService.signInWithGoogle()
+            await sessionStore.refreshCurrentUser()
+        } catch {
+            errorMessage = "Google 로그인에 실패했습니다. Supabase와 Google Provider 설정을 확인해주세요."
+        }
+    }
+
+    func signInWithApple(sessionStore: SessionStore) async {
+        errorMessage = nil
+        infoMessage = nil
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            try await authService.signInWithApple()
+            await sessionStore.refreshCurrentUser()
+        } catch {
+            errorMessage = "Apple 로그인에 실패했습니다. Supabase Apple Provider와 iOS 설정을 확인해주세요."
+        }
+    }
 }

@@ -6,6 +6,7 @@ struct CafeDetailView: View {
     @EnvironmentObject private var sessionStore: SessionStore
     let cafe: Cafe
     @State private var isPresentingReviewComposer = false
+    @State private var isTogglingBookmark = false
 
     var body: some View {
         ScrollView {
@@ -22,20 +23,38 @@ struct CafeDetailView: View {
         }
         .navigationTitle("카페 상세")
         .navigationBarTitleDisplayMode(.inline)
+        .task(id: cafe.id) {
+            await reviewStore.loadReviews(for: cafe)
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    bookmarkStore.toggle(cafe)
+                    Task {
+                        isTogglingBookmark = true
+                        await bookmarkStore.toggle(cafe)
+                        isTogglingBookmark = false
+                    }
                 } label: {
-                    Image(systemName: bookmarkStore.isBookmarked(cafe) ? "bookmark.fill" : "bookmark")
-                        .foregroundStyle(Color.brewBrown)
+                    if isTogglingBookmark {
+                        ProgressView()
+                            .tint(Color.brewBrown)
+                    } else {
+                        Image(systemName: bookmarkStore.isBookmarked(cafe) ? "bookmark.fill" : "bookmark")
+                            .foregroundStyle(Color.brewBrown)
+                    }
                 }
             }
         }
         .background(Color.brewCream.ignoresSafeArea())
         .sheet(isPresented: $isPresentingReviewComposer) {
-            ReviewComposerView(cafeName: cafe.name, initialNickname: sessionStore.currentUser?.nickname ?? "") { review in
-                reviewStore.addReview(review, for: cafe)
+            ReviewComposerView(cafeName: cafe.name, initialNickname: sessionStore.currentUser?.nickname ?? "") { submission in
+                try await reviewStore.addReview(
+                    cafe: cafe,
+                    authorNickname: submission.authorName,
+                    rating: submission.rating,
+                    visitNote: submission.visitNote,
+                    recommendedMenu: submission.recommendedMenu
+                )
             }
             .presentationDetents([.medium, .large])
         }
@@ -134,7 +153,11 @@ struct CafeDetailView: View {
     private var reviewCallToAction: some View {
         HStack(spacing: 12) {
             Button {
-                bookmarkStore.toggle(cafe)
+                Task {
+                    isTogglingBookmark = true
+                    await bookmarkStore.toggle(cafe)
+                    isTogglingBookmark = false
+                }
             } label: {
                 Label(
                     bookmarkStore.isBookmarked(cafe) ? "저장됨" : "저장하기",
@@ -185,35 +208,48 @@ struct CafeDetailView: View {
                     .foregroundStyle(.secondary)
             }
 
-            ForEach(reviews) { review in
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack {
-                        Text(review.authorName)
-                            .font(.subheadline.weight(.semibold))
-
-                        Spacer()
-
-                        Label("\(review.rating)점", systemImage: "star.fill")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Color.brewBrown)
-                    }
-
-                    Text(review.visitNote)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
-                    HStack {
-                        Label(review.recommendedMenu, systemImage: "cup.and.saucer.fill")
-                        Spacer()
-                        Text(review.relativeCreatedAt)
-                    }
-                    .font(.footnote)
+            if reviewStore.isLoadingReviews(for: cafe) && reviews.isEmpty {
+                ProgressView("리뷰를 불러오는 중...")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else if reviews.isEmpty {
+                Text("아직 등록된 리뷰가 없어요. 첫 리뷰를 남겨보세요.")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+            } else {
+                ForEach(reviews) { review in
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text(review.authorName)
+                                .font(.subheadline.weight(.semibold))
+
+                            Spacer()
+
+                            Label("\(review.rating)점", systemImage: "star.fill")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(Color.brewBrown)
+                        }
+
+                        Text(review.visitNote)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        HStack {
+                            Label(review.recommendedMenu, systemImage: "cup.and.saucer.fill")
+                            Spacer()
+                            Text(review.relativeCreatedAt)
+                        }
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(16)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 18))
             }
         }
     }
@@ -222,6 +258,7 @@ struct CafeDetailView: View {
 #Preview {
     CafeDetailView(
         cafe: Cafe(
+            id: UUID(uuidString: "c31f7050-5677-49d1-a3e0-df0c3b0fb001")!,
             name: "성수커피",
             address: "서울 성동구 성수동",
             category: "스페셜티",

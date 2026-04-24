@@ -49,6 +49,9 @@ struct CafeHomeView: View {
             .task {
                 await cafeListViewModel.loadIfNeeded()
             }
+            .task(id: sessionStore.currentUser?.id) {
+                await bookmarkStore.refresh()
+            }
         }
     }
 
@@ -289,7 +292,9 @@ struct CafeHomeView: View {
 
     private func bookmarkButton(for cafe: Cafe) -> some View {
         Button {
-            bookmarkStore.toggle(cafe)
+            Task {
+                await bookmarkStore.toggle(cafe)
+            }
         } label: {
             Image(systemName: bookmarkStore.isBookmarked(cafe) ? "bookmark.fill" : "bookmark")
                 .foregroundStyle(bookmarkStore.isBookmarked(cafe) ? Color.brewBrown : .secondary)

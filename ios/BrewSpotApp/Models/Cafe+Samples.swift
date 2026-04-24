@@ -3,6 +3,7 @@ import Foundation
 extension Cafe {
     static let sampleCafes: [Cafe] = [
         Cafe(
+            id: UUID(uuidString: "c31f7050-5677-49d1-a3e0-df0c3b0fb001")!,
             name: "성수커피",
             address: "서울 성동구 성수동",
             category: "스페셜티",
@@ -19,6 +20,7 @@ extension Cafe {
             openHours: "매일 10:00 - 21:00"
         ),
         Cafe(
+            id: UUID(uuidString: "c31f7050-5677-49d1-a3e0-df0c3b0fb002")!,
             name: "레이어드빈 성수",
             address: "서울 성동구 연무장길 23",
             category: "디저트",
@@ -35,6 +37,7 @@ extension Cafe {
             openHours: "매일 11:00 - 22:00"
         ),
         Cafe(
+            id: UUID(uuidString: "c31f7050-5677-49d1-a3e0-df0c3b0fb003")!,
             name: "연남카페",
             address: "서울 마포구 연남동",
             category: "로스팅",
@@ -51,6 +54,7 @@ extension Cafe {
             openHours: "매일 11:00 - 22:00"
         ),
         Cafe(
+            id: UUID(uuidString: "c31f7050-5677-49d1-a3e0-df0c3b0fb004")!,
             name: "골목필터 연남",
             address: "서울 마포구 동교로38길 18",
             category: "필터커피",
@@ -67,6 +71,7 @@ extension Cafe {
             openHours: "월-토 12:00 - 20:30"
         ),
         Cafe(
+            id: UUID(uuidString: "c31f7050-5677-49d1-a3e0-df0c3b0fb005")!,
             name: "망원카페",
             address: "서울 마포구 망원동",
             category: "브런치",
@@ -83,6 +88,7 @@ extension Cafe {
             openHours: "화-일 09:00 - 20:00"
         ),
         Cafe(
+            id: UUID(uuidString: "c31f7050-5677-49d1-a3e0-df0c3b0fb006")!,
             name: "포인트오브뷰 망원",
             address: "서울 마포구 포은로 91",
             category: "작업형",

@@ -9,12 +9,13 @@
 ## 2. 지원 방식
 
 1. 이메일 로그인
-2. Gmail 로그인
-3. Kakao 로그인
-4. Naver 로그인
+2. Google 로그인
+3. Apple 로그인
+4. Kakao 로그인
+5. Naver 로그인(보류)
 
 > [AI 추가 제안]
-> 한국 사용자 기준으로는 `이메일 + Kakao + Gmail + Naver` 조합이 접근성이 좋다. 다만 iOS 앱 출시 시에는 Apple 심사 기준상 `Sign in with Apple` 제공 필요 여부를 별도로 확인해야 할 수 있다.
+> 2026-04-22 기준으로 iOS 앱에서 Google 같은 서드파티 로그인으로 주 계정을 인증하면 App Store Review Guideline 4.8 대응을 위해 `Sign in with Apple`을 함께 제공하는 쪽이 안전하다. Kakao는 한국 사용자 접근성 측면에서 유효하고, Naver는 이번 버전에서는 보류하는 편이 구현 효율이 높다.
 
 ---
 
@@ -35,7 +36,7 @@
 2. 홈, 지도, 카페 상세는 일부 열람 가능
 3. 리뷰 작성/저장/게시글 작성 시 로그인 유도
 
-### 4-2. Gmail/Kakao/Naver 로그인
+### 4-2. Google/Apple/Kakao 로그인
 
 ```mermaid
 sequenceDiagram
@@ -81,13 +82,16 @@ sequenceDiagram
 예시:
 
 1. 사용자가 이메일 로그인으로 가입
-2. 이후 Gmail 또는 Naver 로그인 추가 연동
+2. 이후 Google 또는 Apple 로그인 추가 연동
 3. 동일 계정에 `user_identities`로 provider 추가 저장
 
 필수 정책:
 
 1. 이미 다른 계정에 연결된 provider는 중복 연결 금지
 2. 대표 로그인 수단이 하나도 남지 않으면 unlink 불가
+3. 이메일 로그인 계정과 Google/Apple 계정의 이메일이 같아도 자동 병합하지 않고, 로그인 후 명시적 연결만 허용
+4. 계정 연결은 현재 세션이 있는 상태에서만 허용하고 재인증 직후 처리
+5. 운영 초기에는 `email`, `google`, `apple`만 1차 연결 대상으로 보고 `kakao`는 추후 확장
 
 ---
 
@@ -106,9 +110,9 @@ sequenceDiagram
 
 ### 로그인 화면
 
-1. Kakao로 계속하기
-2. Gmail로 계속하기
-3. Naver로 계속하기
+1. Apple로 계속하기
+2. Google로 계속하기
+3. Kakao로 계속하기
 4. 이메일로 로그인
 5. 비회원 둘러보기
 
@@ -122,7 +126,7 @@ sequenceDiagram
 ### 설정 > 계정 관리
 
 1. 연결된 로그인 방식 보기
-2. Gmail/Kakao/Naver 연결
+2. Apple/Google/Kakao 연결
 3. 연결 해제
 4. 비밀번호 변경
 5. 회원 탈퇴
@@ -155,12 +159,12 @@ sequenceDiagram
 ### MVP 로그인 조합
 
 1. 이메일 로그인
-2. Kakao 로그인
-3. Gmail 로그인
-4. Naver 로그인
+2. Google 로그인
+3. Apple 로그인
 
 ### 2차 확장
 
-1. Passkey
-2. 계정 통합 UX 개선
-3. Apple 심사 대응 로그인 검토
+1. Kakao 로그인
+2. Passkey
+3. 계정 통합 UX 개선
+4. Naver 로그인 검토

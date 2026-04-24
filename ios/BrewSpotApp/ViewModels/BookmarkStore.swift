@@ -2,47 +2,52 @@ import Foundation
 
 @MainActor
 final class BookmarkStore: ObservableObject {
-    private let storageKey = "bookmark_store.cafe_names"
-    private let timestampStorageKey = "bookmark_store.timestamps"
-    @Published private(set) var bookmarkedCafeNames: Set<String> = []
-    private var bookmarkTimestamps: [String: TimeInterval] = [:]
+    @Published private(set) var bookmarkedCafeIDs: Set<UUID> = []
+    @Published private(set) var isLoading = false
+    @Published var errorMessage: String?
 
-    init() {
-        loadBookmarks()
-    }
+    private let bookmarkService = BookmarkService()
+    private var bookmarkTimestamps: [UUID: Date] = [:]
 
     func isBookmarked(_ cafe: Cafe) -> Bool {
-        bookmarkedCafeNames.contains(cafe.name)
+        bookmarkedCafeIDs.contains(cafe.id)
     }
 
-    func toggle(_ cafe: Cafe) {
-        if isBookmarked(cafe) {
-            bookmarkedCafeNames.remove(cafe.name)
-            bookmarkTimestamps.removeValue(forKey: cafe.name)
-        } else {
-            bookmarkedCafeNames.insert(cafe.name)
-            bookmarkTimestamps[cafe.name] = Date().timeIntervalSince1970
-        }
+    func refresh() async {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
 
-        persistBookmarks()
+        do {
+            let bookmarks = try await bookmarkService.fetchBookmarks()
+            bookmarkedCafeIDs = Set(bookmarks.map(\.cafeID))
+            bookmarkTimestamps = Dictionary(uniqueKeysWithValues: bookmarks.map { ($0.cafeID, $0.createdAt) })
+        } catch {
+            bookmarkedCafeIDs = []
+            bookmarkTimestamps = [:]
+            errorMessage = "저장한 카페를 불러오지 못했어요."
+        }
+    }
+
+    func toggle(_ cafe: Cafe) async {
+        errorMessage = nil
+
+        do {
+            if isBookmarked(cafe) {
+                try await bookmarkService.removeBookmark(cafeID: cafe.id)
+                bookmarkedCafeIDs.remove(cafe.id)
+                bookmarkTimestamps.removeValue(forKey: cafe.id)
+            } else {
+                let bookmark = try await bookmarkService.addBookmark(cafeID: cafe.id)
+                bookmarkedCafeIDs.insert(cafe.id)
+                bookmarkTimestamps[cafe.id] = bookmark.createdAt
+            }
+        } catch {
+            errorMessage = "카페 저장 상태를 업데이트하지 못했어요."
+        }
     }
 
     func bookmarkedAt(_ cafe: Cafe) -> Date? {
-        guard let timestamp = bookmarkTimestamps[cafe.name] else { return nil }
-        return Date(timeIntervalSince1970: timestamp)
-    }
-
-    private func loadBookmarks() {
-        guard let savedNames = UserDefaults.standard.array(forKey: storageKey) as? [String] else {
-            return
-        }
-
-        bookmarkedCafeNames = Set(savedNames)
-        bookmarkTimestamps = UserDefaults.standard.dictionary(forKey: timestampStorageKey) as? [String: TimeInterval] ?? [:]
-    }
-
-    private func persistBookmarks() {
-        UserDefaults.standard.set(Array(bookmarkedCafeNames).sorted(), forKey: storageKey)
-        UserDefaults.standard.set(bookmarkTimestamps, forKey: timestampStorageKey)
+        bookmarkTimestamps[cafe.id]
     }
 }

@@ -59,17 +59,18 @@ order by table_name;
 
 - [ ] Email
 - [ ] Google
+- [ ] Apple
 
 ### 2차 추천
 
 - [ ] Kakao
-- [ ] Naver
+- [ ] Naver 보류
 
 설명:
 
 - Gmail 로그인은 실제로는 Google 로그인으로 처리하면 된다.
-- Kakao/Naver는 MVP 초반에는 뒤로 미뤄도 된다.
-- 이유: Supabase 기본 소셜 로그인 연동은 Google 쪽이 더 빠르게 붙는다.
+- iOS 앱에서 Google 같은 서드파티 로그인을 제공하면 App Store 제출 전 Apple 로그인도 함께 준비하는 편이 안전하다.
+- Kakao는 2차 확장으로 두고, Naver는 Custom OAuth/OIDC 설정 부담 때문에 이번 버전에서는 보류한다.
 
 > [AI 추가 제안]
 > 기획상 `메일 + Kakao + Gmail + Naver`를 유지하더라도, 실제 첫 구현은 `이메일 + Google`부터 시작하는 것이 훨씬 쉽다. Kakao/Naver는 한국 사용자 친화적이지만 초기 연동 난이도는 더 높다.

@@ -3,59 +3,88 @@ import Foundation
 @MainActor
 final class ReviewStore: ObservableObject {
     struct SavedReviewItem: Identifiable {
+        let cafeID: UUID
         let cafeName: String
         let review: CafeReview
 
         var id: UUID { review.id }
     }
 
-    private let storageKey = "review_store.saved_reviews"
-    @Published private var storedReviews: [String: [CafeReview]] = [:]
+    @Published private var reviewsByCafeID: [UUID: [CafeReview]] = [:]
+    @Published private(set) var myReviews: [SavedReviewItem] = []
+    @Published private(set) var loadingCafeIDs: Set<UUID> = []
+    @Published private(set) var isRefreshingMyReviews = false
+    @Published var errorMessage: String?
 
-    init() {
-        loadReviews()
-    }
+    private let reviewService = ReviewService()
 
     func reviews(for cafe: Cafe) -> [CafeReview] {
-        let savedReviews = storedReviews[cafe.name] ?? []
-        return savedReviews + CafeReview.samples(for: cafe)
+        reviewsByCafeID[cafe.id] ?? []
     }
 
-    func addReview(_ review: CafeReview, for cafe: Cafe) {
-        var currentReviews = storedReviews[cafe.name] ?? []
-        currentReviews.insert(review, at: 0)
-        storedReviews[cafe.name] = currentReviews
-        persistReviews()
+    func isLoadingReviews(for cafe: Cafe) -> Bool {
+        loadingCafeIDs.contains(cafe.id)
     }
 
-    func savedReviews(for cafe: Cafe) -> [CafeReview] {
-        storedReviews[cafe.name] ?? []
+    func loadReviews(for cafe: Cafe) async {
+        guard !loadingCafeIDs.contains(cafe.id) else { return }
+
+        loadingCafeIDs.insert(cafe.id)
+        defer { loadingCafeIDs.remove(cafe.id) }
+
+        do {
+            reviewsByCafeID[cafe.id] = try await reviewService.fetchReviews(for: cafe.id)
+        } catch {
+            reviewsByCafeID[cafe.id] = []
+            errorMessage = "리뷰를 불러오지 못했어요."
+        }
     }
 
-    func allSavedReviews() -> [SavedReviewItem] {
-        storedReviews
-            .flatMap { cafeName, reviews in
-                reviews.map { SavedReviewItem(cafeName: cafeName, review: $0) }
+    func refreshMyReviews(using cafes: [Cafe]) async {
+        isRefreshingMyReviews = true
+        errorMessage = nil
+        defer { isRefreshingMyReviews = false }
+
+        let cafeNameByID = Dictionary(uniqueKeysWithValues: cafes.map { ($0.id, $0.name) })
+
+        do {
+            let records = try await reviewService.fetchMyReviewRecords()
+            myReviews = records.map { record in
+                SavedReviewItem(
+                    cafeID: record.cafeID,
+                    cafeName: cafeNameByID[record.cafeID] ?? "알 수 없는 카페",
+                    review: record.asCafeReview
+                )
             }
             .sorted { $0.review.createdAt > $1.review.createdAt }
+        } catch {
+            myReviews = []
+            errorMessage = "내 리뷰를 불러오지 못했어요."
+        }
     }
 
-    private func loadReviews() {
-        guard
-            let data = UserDefaults.standard.data(forKey: storageKey),
-            let decoded = try? JSONDecoder().decode([String: [CafeReview]].self, from: data)
-        else {
-            return
-        }
+    func addReview(
+        cafe: Cafe,
+        authorNickname: String,
+        rating: Int,
+        visitNote: String,
+        recommendedMenu: String
+    ) async throws {
+        let review = try await reviewService.addReview(
+            cafeID: cafe.id,
+            authorNickname: authorNickname,
+            rating: rating,
+            visitNote: visitNote,
+            recommendedMenu: recommendedMenu
+        )
 
-        storedReviews = decoded
-    }
+        var currentReviews = reviewsByCafeID[cafe.id] ?? []
+        currentReviews.insert(review, at: 0)
+        reviewsByCafeID[cafe.id] = currentReviews
 
-    private func persistReviews() {
-        guard let encoded = try? JSONEncoder().encode(storedReviews) else {
-            return
-        }
-
-        UserDefaults.standard.set(encoded, forKey: storageKey)
+        myReviews.insert(
+            SavedReviewItem(cafeID: cafe.id, cafeName: cafe.name, review: review),
+            at: 0
+        )
     }
 }
