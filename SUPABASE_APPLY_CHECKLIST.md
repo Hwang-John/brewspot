@@ -14,6 +14,7 @@
 4. `SUPABASE_VERIFY.sql`
 5. `TEST_ACCOUNTS_TEMPLATE.csv`
 6. `SUPABASE_RESET_CONTENT.sql`
+7. `SUPABASE_AUTH_TRIGGER_FIX.sql`
 
 ## 1. 프로젝트와 Auth 상태 확인
 
@@ -73,7 +74,22 @@ Supabase Dashboard
 1. 이 SQL은 `bookmarks`, `reviews`, `cafes`를 비운다
 2. `auth.users`는 지우지 않는다
 
-## 4. 스키마 1차 검증
+## 4. Auth 트리거 오류 여부 확인
+
+위치:
+`Authentication > Users` 또는 앱 회원가입 테스트
+
+할 일:
+
+1. 이메일 회원가입을 한 번 시도
+2. `Database error saving new user`가 나오면 `SUPABASE_AUTH_TRIGGER_FIX.sql` 실행
+
+현재 확인 메모:
+
+1. 공개 Auth API 기준 회원가입 시 `Database error saving new user` 응답 확인
+2. 원인은 현재 `handle_new_auth_user()` 트리거의 identity 처리 로직일 가능성이 높음
+
+## 5. 스키마 1차 검증
 
 위치:
 `SQL Editor`
@@ -88,7 +104,7 @@ Supabase Dashboard
 2. `cafes`, `reviews`, `bookmarks` 컬럼이 기대값과 맞는지
 3. RLS 정책이 생성됐는지
 
-## 5. 카페 시드 반영
+## 6. 카페 시드 반영
 
 위치:
 `SQL Editor`
@@ -102,7 +118,7 @@ Supabase Dashboard
 1. 총 카페 수가 `24`
 2. 도시별로 `성수 8`, `연남 8`, `망원 8`
 
-## 6. 테스트 계정 생성
+## 7. 테스트 계정 생성
 
 위치:
 `Authentication > Users`
@@ -118,7 +134,7 @@ Supabase Dashboard
 1. `public.users`에서 테스트 계정 이메일 15개가 조회됨
 2. 닉네임이 템플릿과 크게 어긋나지 않음
 
-## 7. 리뷰 시드 반영
+## 8. 리뷰 시드 반영
 
 위치:
 `SQL Editor`
@@ -132,7 +148,7 @@ Supabase Dashboard
 1. 총 리뷰 수가 `36`
 2. 리뷰 분배가 `3개 6곳 / 2개 6곳 / 1개 6곳 / 0개 6곳`
 
-## 8. 최종 검증
+## 9. 최종 검증
 
 위치:
 `SQL Editor`
@@ -149,7 +165,7 @@ Supabase Dashboard
 4. `author_nickname is null` 또는 `recommended_menu_name is null`인 legacy review가 남아 있는지
 5. 테스트 계정 15개가 모두 조회되는지
 
-## 9. 앱 확인
+## 10. 앱 확인
 
 위치:
 Xcode 시뮬레이터
@@ -170,9 +186,10 @@ Xcode 시뮬레이터
 2. 리뷰 수와 평점이 상세 화면에 반영됨
 3. 북마크가 마이페이지 저장 목록에 반영됨
 
-## 10. 실패 시 우선 점검
+## 11. 실패 시 우선 점검
 
 1. `cafe_count`가 24가 아니면 기존 더미 카페가 섞였는지 확인
 2. `review_count`가 36이 아니면 테스트 계정 누락 여부 확인
 3. legacy review가 남아 있으면 기존 `reviews` 데이터 정리 필요
 4. Google / Apple 로그인 실패 시 Provider 활성화 여부 확인
+5. 이메일 회원가입에서 DB 오류가 나면 `SUPABASE_AUTH_TRIGGER_FIX.sql` 먼저 적용

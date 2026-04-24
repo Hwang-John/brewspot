@@ -59,10 +59,12 @@
 - v `SUPABASE_REVIEW_SEED.sql` 전체 리뷰 시드 SQL 추가
 - v `TEST_ACCOUNTS_TEMPLATE.csv` 테스트 계정 템플릿 추가
 - v `SUPABASE_RESET_CONTENT.sql` 기존 더미 데이터 초기화 SQL 추가
+- v `SUPABASE_AUTH_TRIGGER_FIX.sql` 회원가입 트리거 수정 SQL 추가
 - v `OPERATIONS_SEED_PLAN.md` 운영/시드 기준 문서 추가
 - v Supabase 퍼블릭 조회 연결 확인 (`cafes`, `reviews`, `bookmarks` 응답 확인)
 - v `SUPABASE_VERIFY.sql`에 카페/리뷰 수량과 legacy 데이터 점검 쿼리 보강
 - v `SUPABASE_APPLY_CHECKLIST.md` 실제 반영 체크리스트 추가
+- v `AUTH_PROVIDER_SETUP_CHECKLIST.md` 로그인 Provider 설정 체크리스트 추가
 
 외부 확인 필요:
 - [ ] Supabase 프로젝트에 최신 `SUPABASE_MINI_SCHEMA.sql` 실제 반영
@@ -91,6 +93,7 @@
 남은 일:
 - [ ] Google Provider 콘솔 설정값 최종 확정
 - [ ] Apple Provider 콘솔 설정값 최종 확정
+- [ ] 이메일 회원가입 시 `Database error saving new user`가 나면 `SUPABASE_AUTH_TRIGGER_FIX.sql` 실제 반영
 - [ ] 실제 로그인 성공/실패 케이스별 메시지 점검
 - [ ] Kakao 로그인 추가 여부를 MVP 이후 작업으로 분리
 - [ ] Supabase Auth 설정 기준 현재 `google=false`, `apple=false` 상태라 Provider 활성화 필요

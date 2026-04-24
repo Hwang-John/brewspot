@@ -95,6 +95,8 @@
 4. Apple 로그인 성공 / 실패 케이스 확인
 5. 로그인 에러 메시지와 재시도 흐름 점검
 
+실제 설정 체크는 `AUTH_PROVIDER_SETUP_CHECKLIST.md`를 기준으로 진행한다.
+
 ## 8. 보안 체크 포인트
 
 1. OAuth 토큰은 Supabase 또는 서버 검증 흐름을 따른다.

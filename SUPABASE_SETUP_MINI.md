@@ -7,6 +7,7 @@
 이 문서는 현재 BrewSpot MVP를 실제 Supabase 프로젝트에 반영할 때 필요한 가장 짧은 순서를 정리한다.
 
 실제 콘솔 작업 순서를 한 번에 보려면 `SUPABASE_APPLY_CHECKLIST.md`를 함께 본다.
+Auth Provider 설정만 먼저 보려면 `AUTH_PROVIDER_SETUP_CHECKLIST.md`를 함께 본다.
 
 ## 1. 현재 로컬에서 준비 완료된 것
 
@@ -18,17 +19,19 @@
 6. `REVIEW_SEED_TEMPLATE.csv`
 7. `TEST_ACCOUNTS_TEMPLATE.csv`
 8. `SUPABASE_RESET_CONTENT.sql`
+9. `SUPABASE_AUTH_TRIGGER_FIX.sql`
 
 ## 2. 지금 Supabase에서 해야 할 일
 
 1. Supabase 프로젝트 생성 또는 기존 프로젝트 확인
 2. `SUPABASE_MINI_SCHEMA.sql` 실행
 3. 필요 시 `SUPABASE_RESET_CONTENT.sql` 실행
-4. `SUPABASE_VERIFY.sql` 실행
-5. `SUPABASE_CAFE_SEED.sql`로 카페 24개 입력
-6. `TEST_ACCOUNTS_TEMPLATE.csv` 기준 테스트 계정 15개 준비
-7. 테스트 계정 준비 후 리뷰 36개 입력
-8. Email / Google / Apple Auth Provider 설정 확인
+4. 필요 시 `SUPABASE_AUTH_TRIGGER_FIX.sql` 실행
+5. `SUPABASE_VERIFY.sql` 실행
+6. `SUPABASE_CAFE_SEED.sql`로 카페 24개 입력
+7. `TEST_ACCOUNTS_TEMPLATE.csv` 기준 테스트 계정 15개 준비
+8. 테스트 계정 준비 후 리뷰 36개 입력
+9. Email / Google / Apple Auth Provider 설정 확인
 
 ## 3. Auth 기준
 
@@ -73,17 +76,19 @@
 3. `SUPABASE_REVIEW_SEED_TEMPLATE.sql`
 4. `TEST_ACCOUNTS_TEMPLATE.csv`
 5. `SUPABASE_RESET_CONTENT.sql`
+6. `SUPABASE_AUTH_TRIGGER_FIX.sql`
 
 ## 6. 실제 적용 순서
 
 1. Supabase `SQL Editor`에서 `SUPABASE_MINI_SCHEMA.sql` 실행
 2. 기존 더미/legacy 데이터가 있으면 `SUPABASE_RESET_CONTENT.sql` 실행
-3. `SUPABASE_VERIFY.sql` 실행해서 테이블 / 컬럼 / 정책 확인
-4. `SUPABASE_CAFE_SEED.sql` 실행
-5. `TEST_ACCOUNTS_TEMPLATE.csv` 기준 테스트 계정 준비
-6. `SUPABASE_REVIEW_SEED.sql` 또는 `REVIEW_SEED_TEMPLATE.csv`로 리뷰 입력
-7. `SUPABASE_VERIFY.sql`로 카페 24개 / 리뷰 36개 / legacy review 여부 확인
-8. iOS 앱에서 카페 조회 / 리뷰 / 북마크 흐름 확인
+3. 이메일 회원가입에서 `Database error saving new user`가 보이면 `SUPABASE_AUTH_TRIGGER_FIX.sql` 실행
+4. `SUPABASE_VERIFY.sql` 실행해서 테이블 / 컬럼 / 정책 확인
+5. `SUPABASE_CAFE_SEED.sql` 실행
+6. `TEST_ACCOUNTS_TEMPLATE.csv` 기준 테스트 계정 준비
+7. `SUPABASE_REVIEW_SEED.sql` 또는 `REVIEW_SEED_TEMPLATE.csv`로 리뷰 입력
+8. `SUPABASE_VERIFY.sql`로 카페 24개 / 리뷰 36개 / legacy review 여부 확인
+9. iOS 앱에서 카페 조회 / 리뷰 / 북마크 흐름 확인
 
 ## 7. 지금 남은 검증 항목
 

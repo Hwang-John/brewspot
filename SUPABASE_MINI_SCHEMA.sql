@@ -222,12 +222,12 @@ begin
         updated_at = now();
 
   insert into public.user_identities (user_id, provider, provider_user_id, provider_email)
-  select
+  values (
     new.id,
-    coalesce(identity.value ->> 'provider', 'email'),
-    coalesce(identity.value ->> 'id', new.id::text),
-    coalesce(identity.value ->> 'email', new.email)
-  from jsonb_array_elements(coalesce(new.identities, '[]'::jsonb)) as identity(value)
+    coalesce(new.raw_app_meta_data ->> 'provider', 'email'),
+    new.id::text,
+    new.email
+  )
   on conflict (provider, provider_user_id) do nothing;
 
   return new;
