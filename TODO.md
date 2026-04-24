@@ -31,6 +31,7 @@
 - v 더미 UI 데이터를 Supabase 조회 구조로 교체
 - v 리뷰 / 북마크를 Supabase 기반 Service와 연결
 - v 사용자 프로필 보장 로직(`UserProfileService`) 추가
+- v 로그인/회원가입 에러 메시지 세분화
 - v 브라우저용 UI 목업 파일 추가
 - v 로그인/운영/시드/Supabase 검증 문서 정리
 - v 개인정보처리방침 / 이용약관 / 위치정보 처리 기준안 정리
