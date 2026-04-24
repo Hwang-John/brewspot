@@ -70,7 +70,53 @@ order by tablename, policyname;
 select count(*) as cafe_count
 from public.cafes;
 
--- 7. Seed preview
+-- 7. Cafe count by city
+select city, count(*) as cafe_count
+from public.cafes
+group by city
+order by city;
+
+-- 8. Review seed count
+select count(*) as review_count
+from public.reviews;
+
+-- 9. Review count by cafe
+select c.city, c.name, count(r.id) as review_count
+from public.cafes c
+left join public.reviews r on r.cafe_id = c.id
+group by c.city, c.name
+order by c.city, c.name;
+
+-- 10. Rows that still look like legacy review data
+select id, user_id, cafe_id, author_nickname, recommended_menu_name, content, created_at
+from public.reviews
+where author_nickname is null
+   or recommended_menu_name is null
+order by created_at desc;
+
+-- 11. Test account existence check
+select email, nickname
+from public.users
+where email in (
+  'test1@brewspot.app',
+  'test2@brewspot.app',
+  'test3@brewspot.app',
+  'test4@brewspot.app',
+  'test6@brewspot.app',
+  'test8@brewspot.app',
+  'test9@brewspot.app',
+  'test10@brewspot.app',
+  'test12@brewspot.app',
+  'test13@brewspot.app',
+  'test14@brewspot.app',
+  'test15@brewspot.app',
+  'test16@brewspot.app',
+  'test17@brewspot.app',
+  'test18@brewspot.app'
+)
+order by email;
+
+-- 12. Seed preview
 select id, name, category, city, price_note
 from public.cafes
 order by created_at desc

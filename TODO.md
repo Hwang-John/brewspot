@@ -57,8 +57,12 @@
 - v `CAFE_SEED_TEMPLATE.csv` 카페 시드 템플릿 보강
 - v `REVIEW_SEED_TEMPLATE.csv` 리뷰 시드 템플릿 추가
 - v `SUPABASE_REVIEW_SEED.sql` 전체 리뷰 시드 SQL 추가
+- v `TEST_ACCOUNTS_TEMPLATE.csv` 테스트 계정 템플릿 추가
+- v `SUPABASE_RESET_CONTENT.sql` 기존 더미 데이터 초기화 SQL 추가
 - v `OPERATIONS_SEED_PLAN.md` 운영/시드 기준 문서 추가
 - v Supabase 퍼블릭 조회 연결 확인 (`cafes`, `reviews`, `bookmarks` 응답 확인)
+- v `SUPABASE_VERIFY.sql`에 카페/리뷰 수량과 legacy 데이터 점검 쿼리 보강
+- v `SUPABASE_APPLY_CHECKLIST.md` 실제 반영 체크리스트 추가
 
 외부 확인 필요:
 - [ ] Supabase 프로젝트에 최신 `SUPABASE_MINI_SCHEMA.sql` 실제 반영

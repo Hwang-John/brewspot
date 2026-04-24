@@ -123,6 +123,7 @@
 1. `REVIEW_SEED_TEMPLATE.csv`
 2. `SUPABASE_REVIEW_SEED.sql`
 3. `SUPABASE_REVIEW_SEED_TEMPLATE.sql`
+4. `TEST_ACCOUNTS_TEMPLATE.csv`
 
 ## 5. 최소 운영 정책 확정
 
@@ -138,6 +139,9 @@ MVP 운영 정책은 아래만 먼저 고정한다.
 
 ## 6. 실입력 전 체크
 
-1. Supabase `cafes` 테이블에 `SUPABASE_CAFE_SEED.sql` 적용
-2. 테스트 계정 준비 후 `SUPABASE_REVIEW_SEED.sql` 또는 `REVIEW_SEED_TEMPLATE.csv` 적용
-3. 지도 화면에서 좌표와 카테고리 표기가 기대대로 보이는지 확인
+1. 기존 더미/legacy 데이터가 섞여 있으면 `SUPABASE_RESET_CONTENT.sql` 실행
+2. Supabase `cafes` 테이블에 `SUPABASE_CAFE_SEED.sql` 적용
+3. `TEST_ACCOUNTS_TEMPLATE.csv` 기준 테스트 계정 15개 생성
+4. 테스트 계정 준비 후 `SUPABASE_REVIEW_SEED.sql` 또는 `REVIEW_SEED_TEMPLATE.csv` 적용
+5. `SUPABASE_VERIFY.sql`로 카페 24개 / 리뷰 36개 / legacy review 여부 확인
+6. 지도 화면에서 좌표와 카테고리 표기가 기대대로 보이는지 확인
