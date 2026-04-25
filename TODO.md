@@ -78,13 +78,14 @@
 - v `SUPABASE_MINI_SCHEMA.sql`에서 legacy 샘플 카페 시드 제거
 
 외부 확인 필요:
-- [ ] Supabase 프로젝트에 최신 `SUPABASE_MINI_SCHEMA.sql` 실제 반영
-- [ ] `SUPABASE_VERIFY.sql` 실행으로 컬럼 / 정책 / 시드 상태 점검
-- [ ] 카페 시드 24개 이상 실제 입력
+- v Supabase 프로젝트에 최신 `SUPABASE_MINI_SCHEMA.sql` 실제 반영
+- v `SUPABASE_VERIFY.sql` 실행으로 컬럼 / 정책 / 시드 상태 점검
+- v 카페 시드 24개 이상 실제 입력
 - [ ] 테스트 리뷰 36개 이상 실제 입력
 - [ ] RLS 정책이 iOS 앱 요청 흐름과 충돌 없는지 검증
-- [ ] 현재 Supabase `cafes` 응답은 9개로 확인되어 목표 24개와 불일치
-- [ ] 현재 Supabase 리뷰 데이터에 legacy / 최신 형식이 혼재하는지 정리 필요
+- v 현재 Supabase `cafes` 응답은 9개로 확인되어 목표 24개와 불일치
+- v 현재 Supabase 리뷰 데이터에 legacy / 최신 형식이 혼재하는지 정리 필요
+- [ ] 현재 `public.users`에 테스트 계정 중복/누락이 있어 리뷰 시드가 27개만 반영되는 문제 정리 필요
 
 ## 4. 로그인 확장 상태
 
@@ -104,7 +105,7 @@
 남은 일:
 - [ ] Google Provider 콘솔 설정값 최종 확정
 - [ ] Apple Provider 콘솔 설정값 최종 확정
-- [ ] 이메일 회원가입 시 `Database error saving new user`가 나면 `SUPABASE_AUTH_TRIGGER_FIX.sql` 실제 반영
+- v 이메일 회원가입 시 `Database error saving new user`가 나면 `SUPABASE_AUTH_TRIGGER_FIX.sql` 실제 반영
 - [ ] 실제 로그인 성공/실패 케이스별 메시지 점검
 - v Kakao 로그인 추가 여부를 MVP 이후 작업으로 분리
 - [ ] Supabase Auth 설정 기준 현재 `google=false`, `apple=false` 상태라 Provider 활성화 필요
@@ -136,6 +137,7 @@
 - v 현재 MVP는 개인위치정보 미수집으로 별도 위치기반서비스 약관 비공개 유지
 - [ ] 앱스토어 제출용 설명/스크린샷 준비
 - [ ] 테스트 계정 준비
+현재 상태: Auth 계정 생성은 완료했지만 `public.users` 정합성 확인과 리뷰 시드 36개 반영까지는 미완료
 
 ## 7. 이번 버전에서 미루기
 - [ ] Kakao 로그인 구현
