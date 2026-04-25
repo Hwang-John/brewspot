@@ -70,6 +70,8 @@
 - v `APP_STORE_SCREENSHOT_PLAN.md` 앱스토어 스크린샷 구성안 추가
 - v `LAUNCH_VALUES_CHECKLIST.md` 출시 고정값 체크리스트 추가
 - v `APP_PRIVACY_LABEL_DRAFT.md` App Privacy 초안 추가
+- v `MANUAL_QA_CHECKLIST.md` 수동 검증 체크리스트 추가
+- v `APP_REVIEW_NOTES_DRAFT.md` App Review 메모 초안 추가
 
 외부 확인 필요:
 - [ ] Supabase 프로젝트에 최신 `SUPABASE_MINI_SCHEMA.sql` 실제 반영
