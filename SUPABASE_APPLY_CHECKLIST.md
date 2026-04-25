@@ -43,6 +43,7 @@ Supabase Dashboard
 할 일:
 
 1. `SUPABASE_MINI_SCHEMA.sql` 전체 실행
+2. 이 파일은 테이블/정책/트리거만 만들고 카페 데이터는 넣지 않음
 
 정상 기준:
 
@@ -113,6 +114,7 @@ Supabase Dashboard
 할 일:
 
 1. `SUPABASE_CAFE_SEED.sql` 실행
+2. 카페 데이터는 반드시 이 파일로만 넣기
 
 정상 기준:
 
