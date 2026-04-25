@@ -74,6 +74,7 @@
 - v `APP_REVIEW_NOTES_DRAFT.md` App Review 메모 초안 추가
 - v `TEST_ACCOUNT_SETUP_CHECKLIST.md` 테스트 계정 준비 체크리스트 추가
 - v `ERD.md`에 `auth.users` 연결과 트리거 기준 반영
+- v `EXECUTION_SEQUENCE.md`에 Supabase → Provider → QA 실행 순서 정리
 
 외부 확인 필요:
 - [ ] Supabase 프로젝트에 최신 `SUPABASE_MINI_SCHEMA.sql` 실제 반영
