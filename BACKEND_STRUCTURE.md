@@ -33,10 +33,11 @@
 ### Supabase
 
 1. 인증 처리
-2. 사용자 프로필 생성 / 보장
+2. `auth.users -> public.users` 프로필 생성 / 보장
 3. 카페 / 리뷰 / 북마크 데이터 저장
 4. RLS 정책 적용
 5. 리뷰 집계 트리거 실행
+6. Provider별 계정 식별 정보 동기화
 
 ## 4. 현재 코드 기준 서비스 영역
 
@@ -57,6 +58,7 @@
 3. 카페 24개 / 리뷰 36개 시드 실제 반영
 4. Google / Apple Provider 설정 검증
 5. RLS 정책이 앱 흐름과 충돌 없는지 확인
+6. `SUPABASE_AUTH_TRIGGER_FIX.sql` 반영 필요 여부 확인
 
 ## 6. 2차 이후 커스텀 백엔드 확장안
 
@@ -97,3 +99,4 @@ backend/
 1. Supabase 실반영
 2. 앱과 DB 흐름 검증
 3. 운영 데이터와 정책 정합성 확인
+4. Auth 트리거와 Provider 설정 안정화

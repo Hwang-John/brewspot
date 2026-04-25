@@ -8,7 +8,7 @@
 
 ## 2. 현재 MVP 테이블
 
-현재 구현/스키마 기준 핵심 테이블은 아래 5개다.
+현재 구현/스키마 기준 핵심 공개 테이블은 아래 5개다.
 
 1. `users`
 2. `user_identities`
@@ -16,16 +16,27 @@
 4. `reviews`
 5. `bookmarks`
 
+인증 원본 테이블은 Supabase의 `auth.users`이며, 앱이 직접 다루는 프로필 테이블은 `public.users`다.
+
 ## 3. 현재 MVP ERD
 
 ```mermaid
 erDiagram
+  AUTH_USERS ||--|| USERS : provisions
   USERS ||--o{ USER_IDENTITIES : has
   USERS ||--o{ REVIEWS : writes
   USERS ||--o{ BOOKMARKS : saves
 
   CAFES ||--o{ REVIEWS : receives
   CAFES ||--o{ BOOKMARKS : saved_by
+
+  AUTH_USERS {
+    uuid id PK
+    string email
+    json raw_user_meta_data
+    json raw_app_meta_data
+    datetime created_at
+  }
 
   USERS {
     uuid id PK
@@ -89,10 +100,17 @@ erDiagram
 
 ## 4. 현재 MVP 테이블 설명
 
+### auth.users
+
+1. Supabase Auth가 관리하는 원본 인증 테이블
+2. 이메일, Provider, 메타데이터가 먼저 생성되는 기준점
+3. `handle_new_auth_user()` 트리거로 `public.users`와 `public.user_identities`를 채움
+
 ### users
 
 1. 서비스 사용자 프로필 기본 테이블
 2. 닉네임, 이메일, 상태, 프로필 이미지 URL 보관
+3. `auth.users.id`를 그대로 PK로 사용
 
 ### user_identities
 
@@ -124,14 +142,25 @@ erDiagram
 3. `bookmarks(user_id, cafe_id)` unique
 4. `reviews.overall_rating`은 1~5
 5. `cafes(name, address)` unique index 기준으로 upsert
+6. `users.id`는 `auth.users(id)`를 참조
 
-## 6. 현재 문서와 스키마 연결
+## 6. 현재 트리거 / 동기화 기준
+
+1. `handle_new_auth_user()`
+   `auth.users` 생성 시 `public.users`, `public.user_identities` 보장
+2. `refresh_cafe_review_stats()`
+   리뷰 생성/수정/삭제 시 `cafes.avg_rating`, `cafes.review_count` 갱신
+3. `set_updated_at()`
+   `users`, `cafes`, `reviews`의 `updated_at` 자동 갱신
+
+## 7. 현재 문서와 스키마 연결
 
 1. 실제 스키마 기준 문서는 `SUPABASE_MINI_SCHEMA.sql`
 2. 스키마 반영 여부 확인은 `SUPABASE_VERIFY.sql`
 3. 시드 기준 문서는 `CAFE_SEED_TEMPLATE.csv`, `REVIEW_SEED_TEMPLATE.csv`
+4. 회원가입 트리거 오류 수정 문서는 `SUPABASE_AUTH_TRIGGER_FIX.sql`
 
-## 7. 2차 이후 확장 후보
+## 8. 2차 이후 확장 후보
 
 현재 구현에는 없지만 이후 확장 후보는 아래와 같다.
 
