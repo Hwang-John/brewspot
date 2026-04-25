@@ -40,11 +40,12 @@
 
 ## 2. 지금 바로 확인해야 할 것
 - v Xcode 시뮬레이터에서 앱 전체 실행 확인
-- [ ] 이메일 로그인 후 홈 진입, 카페 조회, 리뷰 작성, 북마크 동작 검증
+- v 이메일 로그인 후 홈 진입, 카페 조회, 리뷰 작성, 북마크 동작 검증
 - [ ] Google 로그인 redirect / URL scheme / Supabase Provider 설정 실검증
 - [ ] Apple 로그인 redirect / Bundle 설정 / Supabase Provider 설정 실검증
-- [ ] 리뷰 작성 후 상세 / 마이페이지 / 최근 활동 반영 흐름 검증
-- [ ] 네트워크 실패, 권한 문제, 빈 데이터 상태에서 에러 문구/로딩 상태 점검
+- v 리뷰 작성 후 상세 / 마이페이지 / 최근 활동 반영 흐름 검증
+- v 기본 앱 흐름 기준 빈 상태 문구와 화면 전환 정상 동작 확인
+- [ ] 네트워크 실패, 권한 문제, 강제 빈 데이터 상태에서 에러 문구/로딩 상태 점검
 
 ## 3. 데이터 / 백엔드 상태
 
@@ -61,6 +62,7 @@
 - v `TEST_ACCOUNTS_TEMPLATE.csv` 테스트 계정 템플릿 추가
 - v `SUPABASE_RESET_CONTENT.sql` 기존 더미 데이터 초기화 SQL 추가
 - v `SUPABASE_AUTH_TRIGGER_FIX.sql` 회원가입 트리거 수정 SQL 추가
+- v `SUPABASE_AUTH_BACKFILL.sql` 테스트 계정 프로필 백필 SQL 추가
 - v `OPERATIONS_SEED_PLAN.md` 운영/시드 기준 문서 추가
 - v Supabase 퍼블릭 조회 연결 확인 (`cafes`, `reviews`, `bookmarks` 응답 확인)
 - v `SUPABASE_VERIFY.sql`에 카페/리뷰 수량과 legacy 데이터 점검 쿼리 보강
@@ -81,11 +83,11 @@
 - v Supabase 프로젝트에 최신 `SUPABASE_MINI_SCHEMA.sql` 실제 반영
 - v `SUPABASE_VERIFY.sql` 실행으로 컬럼 / 정책 / 시드 상태 점검
 - v 카페 시드 24개 이상 실제 입력
-- [ ] 테스트 리뷰 36개 이상 실제 입력
+- v 테스트 리뷰 36개 실제 입력 확인
 - [ ] RLS 정책이 iOS 앱 요청 흐름과 충돌 없는지 검증
 - v 현재 Supabase `cafes` 응답은 9개로 확인되어 목표 24개와 불일치
 - v 현재 Supabase 리뷰 데이터에 legacy / 최신 형식이 혼재하는지 정리 필요
-- [ ] 현재 `public.users`에 테스트 계정 중복/누락이 있어 리뷰 시드가 27개만 반영되는 문제 정리 필요
+- v `SUPABASE_AUTH_BACKFILL.sql` 실행 포함 기준으로 `public.users` 테스트 계정 누락 정리 후 리뷰 36개 반영 확인
 
 ## 4. 로그인 확장 상태
 
@@ -108,7 +110,8 @@
 - v 이메일 회원가입 시 `Database error saving new user`가 나면 `SUPABASE_AUTH_TRIGGER_FIX.sql` 실제 반영
 - [ ] 실제 로그인 성공/실패 케이스별 메시지 점검
 - v Kakao 로그인 추가 여부를 MVP 이후 작업으로 분리
-- [ ] Supabase Auth 설정 기준 현재 `google=false`, `apple=false` 상태라 Provider 활성화 필요
+- [ ] 2026-04-26 Supabase Auth 설정 응답 기준 현재 `google=false`, `apple=false` 상태라 Provider 활성화 필요
+- [ ] Google Provider 활성화 시 Supabase에서 `At least one Client ID is required when Google sign-in is enabled.` 오류가 확인되어 Google Cloud OAuth Client ID/Secret 준비 필요
 
 ## 5. 운영 준비
 
@@ -137,7 +140,7 @@
 - v 현재 MVP는 개인위치정보 미수집으로 별도 위치기반서비스 약관 비공개 유지
 - [ ] 앱스토어 제출용 설명/스크린샷 준비
 - [ ] 테스트 계정 준비
-현재 상태: Auth 계정 생성은 완료했지만 `public.users` 정합성 확인과 리뷰 시드 36개 반영까지는 미완료
+현재 상태: Auth 계정 / `public.users` 정합성 / 카페 24개 / 리뷰 36개 반영과 앱 내 end-to-end QA는 확인 완료했고, OAuth는 Supabase Provider 비활성화 및 Google Client ID 미입력 상태까지 확인했다. 다음은 Google/Apple Provider 실설정과 출시 문서 마무리다
 
 ## 7. 이번 버전에서 미루기
 - [ ] Kakao 로그인 구현
@@ -150,8 +153,7 @@
 
 ## 추천 작업 순서
 1. Supabase 최신 스키마 반영 및 `SUPABASE_VERIFY.sql` 실행
-2. 카페 24개 / 리뷰 36개 시드 실제 입력
-3. Google / Apple Provider 활성화와 테스트 계정 준비
-4. Xcode에서 이메일 / Google / Apple 로그인 실제 동작 확인
-5. 카페 조회 / 북마크 / 리뷰 작성 end-to-end 검증
-6. 운영 정책 및 출시 문서 마무리
+2. Google Cloud OAuth Client ID/Secret 준비 후 Supabase Google Provider 활성화
+3. Apple Provider 설정값 준비 후 Supabase Apple Provider 활성화
+4. Xcode에서 Google / Apple 로그인 실제 동작 확인
+5. 운영 정책 및 출시 문서 마무리

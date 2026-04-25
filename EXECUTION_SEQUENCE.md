@@ -11,8 +11,10 @@
 4. `SUPABASE_AUTH_TRIGGER_FIX.sql` 실행 여부 확인
 5. `SUPABASE_CAFE_SEED.sql` 실행
 6. 테스트 계정 15개 생성
-7. `SUPABASE_REVIEW_SEED.sql` 실행
-8. `SUPABASE_VERIFY.sql` 실행
+7. `SUPABASE_VERIFY.sql`로 `public.users` 15개 / 누락 계정 여부 확인
+8. 필요 시 `SUPABASE_AUTH_BACKFILL.sql` 실행
+9. `SUPABASE_REVIEW_SEED.sql` 실행
+10. `SUPABASE_VERIFY.sql` 실행
 
 Codex 작업:
 1. 실행 순서 문서 정리
@@ -24,7 +26,8 @@ Codex 작업:
 1. `cafe_count = 24`
 2. `review_count = 36`
 3. 테스트 계정 15개 조회
-4. legacy review 정리 확인
+4. `auth.users`에만 있고 `public.users`에 없는 테스트 계정 없음
+5. legacy review 정리 확인
 
 관련 문서:
 1. `SUPABASE_APPLY_CHECKLIST.md`

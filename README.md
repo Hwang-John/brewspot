@@ -22,6 +22,7 @@
 4. `ERD.md`: 현재 MVP 데이터 구조
 5. `SUPABASE_MINI_SCHEMA.sql`: 실제 스키마 기준
 6. `OPERATIONS_SEED_PLAN.md`: 카페/리뷰 시드와 운영 기준
+7. `SUPABASE_AUTH_BACKFILL.sql`: Auth 계정과 `public.users` 누락 복구용 SQL
 
 ## 1. 제품 한 줄 정의
 

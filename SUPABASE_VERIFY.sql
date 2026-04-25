@@ -94,7 +94,28 @@ where author_nickname is null
    or recommended_menu_name is null
 order by created_at desc;
 
--- 11. Test account existence check
+-- 11. Test account count in public.users
+select count(*) as public_user_count
+from public.users
+where email in (
+  'test1@brewspot.app',
+  'test2@brewspot.app',
+  'test3@brewspot.app',
+  'test4@brewspot.app',
+  'test6@brewspot.app',
+  'test8@brewspot.app',
+  'test9@brewspot.app',
+  'test10@brewspot.app',
+  'test12@brewspot.app',
+  'test13@brewspot.app',
+  'test14@brewspot.app',
+  'test15@brewspot.app',
+  'test16@brewspot.app',
+  'test17@brewspot.app',
+  'test18@brewspot.app'
+);
+
+-- 12. Test account existence check
 select email, nickname
 from public.users
 where email in (
@@ -116,7 +137,32 @@ where email in (
 )
 order by email;
 
--- 12. Seed preview
+-- 13. Auth users missing public.users profile rows
+select au.email, au.id
+from auth.users au
+left join public.users pu
+  on pu.id = au.id
+where au.email in (
+  'test1@brewspot.app',
+  'test2@brewspot.app',
+  'test3@brewspot.app',
+  'test4@brewspot.app',
+  'test6@brewspot.app',
+  'test8@brewspot.app',
+  'test9@brewspot.app',
+  'test10@brewspot.app',
+  'test12@brewspot.app',
+  'test13@brewspot.app',
+  'test14@brewspot.app',
+  'test15@brewspot.app',
+  'test16@brewspot.app',
+  'test17@brewspot.app',
+  'test18@brewspot.app'
+)
+  and pu.id is null
+order by au.email;
+
+-- 14. Seed preview
 select id, name, category, city, price_note
 from public.cafes
 order by created_at desc

@@ -1,5 +1,6 @@
 -- BrewSpot full review seed
 -- Run this after SUPABASE_MINI_SCHEMA.sql and SUPABASE_CAFE_SEED.sql
+-- If test accounts exist in auth.users but not public.users, run SUPABASE_AUTH_BACKFILL.sql first
 -- Make sure users with the emails below already exist in auth.users/public.users
 -- Safe to re-run because matching seeded reviews are deleted before insert
 

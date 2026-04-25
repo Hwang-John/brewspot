@@ -1,6 +1,6 @@
 # BrewSpot Auth Provider 설정 체크리스트
 
-최종 기준일: 2026-04-24
+최종 기준일: 2026-04-26
 
 ## 목적
 
@@ -38,6 +38,7 @@ Supabase `Authentication > Providers > Email`
 1. `email=true`
 2. `disable_signup=false`
 3. `mailer_autoconfirm=false`
+4. 2026-04-26 `GET /auth/v1/settings` 응답으로 재확인
 
 의미:
 
@@ -71,7 +72,8 @@ Supabase `Authentication > Providers > Google`
 현재 확인 메모:
 
 1. `google=false` 상태로 확인됨
-2. 즉, 앱 코드가 있어도 지금은 실제 로그인 성공 불가
+2. 2026-04-26 `GET /auth/v1/settings` 응답 기준 여전히 비활성화
+3. 즉, 앱 코드가 있어도 지금은 실제 로그인 성공 불가
 
 정상 기준:
 
@@ -102,7 +104,8 @@ Supabase `Authentication > Providers > Apple`
 현재 확인 메모:
 
 1. `apple=false` 상태로 확인됨
-2. 즉, 앱 코드가 있어도 지금은 실제 로그인 성공 불가
+2. 2026-04-26 `GET /auth/v1/settings` 응답 기준 여전히 비활성화
+3. 즉, 앱 코드가 있어도 지금은 실제 로그인 성공 불가
 
 정상 기준:
 

@@ -15,7 +15,8 @@
 5. `TEST_ACCOUNTS_TEMPLATE.csv`
 6. `SUPABASE_RESET_CONTENT.sql`
 7. `SUPABASE_AUTH_TRIGGER_FIX.sql`
-8. `TEST_ACCOUNT_SETUP_CHECKLIST.md`
+8. `SUPABASE_AUTH_BACKFILL.sql`
+9. `TEST_ACCOUNT_SETUP_CHECKLIST.md`
 
 ## 1. 프로젝트와 Auth 상태 확인
 
@@ -136,6 +137,7 @@ Supabase Dashboard
 
 1. `public.users`에서 테스트 계정 이메일 15개가 조회됨
 2. 닉네임이 템플릿과 크게 어긋나지 않음
+3. `auth.users`에만 있고 `public.users`에 없는 테스트 계정이 없거나, 있으면 `SUPABASE_AUTH_BACKFILL.sql` 실행 후 다시 확인
 
 관련 체크:
 
@@ -154,6 +156,7 @@ Supabase Dashboard
 
 1. 총 리뷰 수가 `36`
 2. 리뷰 분배가 `3개 6곳 / 2개 6곳 / 1개 6곳 / 0개 6곳`
+3. 실행 전 `public.users` 테스트 계정 수가 `15`가 아니면 `SUPABASE_AUTH_BACKFILL.sql`부터 실행
 
 ## 9. 최종 검증
 
@@ -171,6 +174,7 @@ Supabase Dashboard
 3. 도시별 카페 수가 `8 / 8 / 8`
 4. `author_nickname is null` 또는 `recommended_menu_name is null`인 legacy review가 남아 있는지
 5. 테스트 계정 15개가 모두 조회되는지
+6. `auth.users`에만 있고 `public.users`에 없는 테스트 계정이 남아 있지 않은지
 
 ## 10. 앱 확인
 
@@ -197,6 +201,7 @@ Xcode 시뮬레이터
 
 1. `cafe_count`가 24가 아니면 기존 더미 카페가 섞였는지 확인
 2. `review_count`가 36이 아니면 테스트 계정 누락 여부 확인
-3. legacy review가 남아 있으면 기존 `reviews` 데이터 정리 필요
-4. Google / Apple 로그인 실패 시 Provider 활성화 여부 확인
-5. 이메일 회원가입에서 DB 오류가 나면 `SUPABASE_AUTH_TRIGGER_FIX.sql` 먼저 적용
+3. `auth.users`에는 있는데 `public.users`에는 없다면 `SUPABASE_AUTH_BACKFILL.sql` 실행
+4. legacy review가 남아 있으면 기존 `reviews` 데이터 정리 필요
+5. Google / Apple 로그인 실패 시 Provider 활성화 여부 확인
+6. 이메일 회원가입에서 DB 오류가 나면 `SUPABASE_AUTH_TRIGGER_FIX.sql` 먼저 적용
