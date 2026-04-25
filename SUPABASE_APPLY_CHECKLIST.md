@@ -15,6 +15,7 @@
 5. `TEST_ACCOUNTS_TEMPLATE.csv`
 6. `SUPABASE_RESET_CONTENT.sql`
 7. `SUPABASE_AUTH_TRIGGER_FIX.sql`
+8. `TEST_ACCOUNT_SETUP_CHECKLIST.md`
 
 ## 1. 프로젝트와 Auth 상태 확인
 
@@ -133,6 +134,10 @@ Supabase Dashboard
 
 1. `public.users`에서 테스트 계정 이메일 15개가 조회됨
 2. 닉네임이 템플릿과 크게 어긋나지 않음
+
+관련 체크:
+
+1. `TEST_ACCOUNT_SETUP_CHECKLIST.md`
 
 ## 8. 리뷰 시드 반영
 

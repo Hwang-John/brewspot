@@ -72,6 +72,7 @@
 - v `APP_PRIVACY_LABEL_DRAFT.md` App Privacy 초안 추가
 - v `MANUAL_QA_CHECKLIST.md` 수동 검증 체크리스트 추가
 - v `APP_REVIEW_NOTES_DRAFT.md` App Review 메모 초안 추가
+- v `TEST_ACCOUNT_SETUP_CHECKLIST.md` 테스트 계정 준비 체크리스트 추가
 
 외부 확인 필요:
 - [ ] Supabase 프로젝트에 최신 `SUPABASE_MINI_SCHEMA.sql` 실제 반영
@@ -102,7 +103,7 @@
 - [ ] Apple Provider 콘솔 설정값 최종 확정
 - [ ] 이메일 회원가입 시 `Database error saving new user`가 나면 `SUPABASE_AUTH_TRIGGER_FIX.sql` 실제 반영
 - [ ] 실제 로그인 성공/실패 케이스별 메시지 점검
-- [ ] Kakao 로그인 추가 여부를 MVP 이후 작업으로 분리
+- v Kakao 로그인 추가 여부를 MVP 이후 작업으로 분리
 - [ ] Supabase Auth 설정 기준 현재 `google=false`, `apple=false` 상태라 Provider 활성화 필요
 
 ## 5. 운영 준비
