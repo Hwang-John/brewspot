@@ -1,10 +1,13 @@
 import SwiftUI
+import UIKit
 
 struct CafeHomeView: View {
+    @Environment(\.openURL) private var openURL
     @EnvironmentObject private var sessionStore: SessionStore
     @EnvironmentObject private var bookmarkStore: BookmarkStore
     @EnvironmentObject private var cafeListViewModel: CafeListViewModel
     @EnvironmentObject private var toastCenter: AppToastCenter
+    @EnvironmentObject private var locationStore: LocationStore
     @State private var searchText = ""
     @State private var selectedCategory = "전체"
     @State private var selectedMapCafe: Cafe?
@@ -26,6 +29,7 @@ struct CafeHomeView: View {
                         }
 
                         heroBanner
+                        locationPermissionCard
 
                         if let errorMessage = cafeListViewModel.errorMessage {
                             ErrorStateCard(
@@ -81,6 +85,9 @@ struct CafeHomeView: View {
             }
             .task(id: sessionStore.currentUser?.id) {
                 await bookmarkStore.refresh()
+            }
+            .task {
+                locationStore.refreshLocationIfAuthorized()
             }
         }
     }
@@ -177,6 +184,41 @@ struct CafeHomeView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.white.opacity(0.12))
             .clipShape(RoundedRectangle(cornerRadius: 18))
+
+            if let nearestCafe = locationStore.nearestCafe(in: mapDisplayCafes),
+               let distanceText = locationStore.distanceText(to: nearestCafe.coordinate) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("내 주변 브루 스팟")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.white.opacity(0.72))
+
+                    HStack {
+                        Text(nearestCafe.name)
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.white)
+
+                        Spacer()
+
+                        Text(distanceText)
+                            .font(.footnote.weight(.bold))
+                            .foregroundStyle(Color.brewMocha)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.white.opacity(0.9))
+                            .clipShape(Capsule())
+                    }
+
+                    if let placeSummary = locationStore.placeSummary {
+                        Text(placeSummary)
+                            .font(.caption)
+                            .foregroundStyle(Color.white.opacity(0.72))
+                    }
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.white.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 18))
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(22)
@@ -258,6 +300,91 @@ struct CafeHomeView: View {
         .clipShape(RoundedRectangle(cornerRadius: 22))
     }
 
+    private var locationPermissionCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("현재 위치")
+                        .font(.headline)
+
+                    Text(locationStore.authorizationDescription)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Text("요청 \(locationStore.requestCount)회")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.brewBrown)
+            }
+
+            if let placeSummary = locationStore.placeSummary {
+                Text("현재 기준 위치: \(placeSummary)")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let refreshStatusText = locationStore.refreshStatusText {
+                Label(refreshStatusText, systemImage: locationStore.isRefreshing ? "location.fill" : "info.circle")
+                    .font(.footnote)
+                    .foregroundColor(locationStore.lastErrorMessage == nil ? .secondary : .orange)
+            }
+
+            HStack(spacing: 10) {
+                Button(primaryLocationButtonTitle) {
+                    handlePrimaryLocationAction()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.brewBrown)
+
+                if locationStore.isAuthorized {
+                    Button("현재 위치 새로고침") {
+                        locationStore.refreshLocationIfAuthorized()
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(Color.brewBrown)
+                    .disabled(locationStore.isRefreshing)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(Color.white.opacity(0.82))
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 22))
+    }
+
+    private var primaryLocationButtonTitle: String {
+        switch locationStore.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            return "내 위치 사용 중"
+        case .denied, .restricted:
+            return "설정 열기"
+        case .notDetermined:
+            return "위치 권한 요청"
+        @unknown default:
+            return "위치 확인"
+        }
+    }
+
+    private func handlePrimaryLocationAction() {
+        switch locationStore.authorizationStatus {
+        case .notDetermined:
+            locationStore.requestWhenInUseAuthorization()
+        case .authorizedAlways, .authorizedWhenInUse:
+            locationStore.refreshLocationIfAuthorized()
+        case .denied, .restricted:
+            guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
+            openURL(settingsURL)
+        @unknown default:
+            break
+        }
+    }
+
     private func recommendedSection(focusOnMap: @escaping (Cafe) -> Void) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
@@ -330,6 +457,9 @@ struct CafeHomeView: View {
             HStack(spacing: 8) {
                 tagPill(cafe.city, tint: Color.brewBrown, background: Color.brewLatte)
                 tagPill(cafe.category, tint: .primary, background: Color.white.opacity(0.72))
+                if let distanceText = locationStore.distanceText(to: cafe.coordinate) {
+                    tagPill(distanceText, tint: Color.brewBrown, background: Color.white.opacity(0.72))
+                }
                 Spacer()
                 Text("리뷰 \(cafe.reviewCount)개")
                     .font(.caption.weight(.semibold))
@@ -436,6 +566,12 @@ struct CafeHomeView: View {
             Text(cafe.signatureMenu)
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(Color.brewBrown)
+
+            if let distanceText = locationStore.distanceText(to: cafe.coordinate) {
+                Text("현재 위치에서 \(distanceText)")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -599,4 +735,6 @@ struct CafeHomeView: View {
         .environmentObject(BookmarkStore())
         .environmentObject(ReviewStore())
         .environmentObject(CafeListViewModel())
+        .environmentObject(AppToastCenter())
+        .environmentObject(LocationStore())
 }

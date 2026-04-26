@@ -42,10 +42,33 @@ struct UserProfileService {
 
         return profile
     }
+
+    func updateCurrentUserProfile(nickname: String) async throws -> AppUser {
+        let session = try await client.auth.session
+
+        let updatedProfile: AppUser = try await client
+            .from("users")
+            .update(
+                UserProfileUpdate(
+                    nickname: String(nickname.prefix(30))
+                )
+            )
+            .eq("id", value: session.user.id)
+            .select()
+            .single()
+            .execute()
+            .value
+
+        return updatedProfile
+    }
 }
 
 private struct UserProfileInsert: Encodable {
     let id: UUID
     let nickname: String
     let email: String?
+}
+
+private struct UserProfileUpdate: Encodable {
+    let nickname: String
 }

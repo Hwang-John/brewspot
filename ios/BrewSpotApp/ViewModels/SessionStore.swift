@@ -29,4 +29,8 @@ final class SessionStore: ObservableObject {
             print("Sign out error: \(error)")
         }
     }
+
+    func updateNickname(_ nickname: String) async throws {
+        currentUser = try await authService.updateCurrentUserProfile(nickname: nickname)
+    }
 }

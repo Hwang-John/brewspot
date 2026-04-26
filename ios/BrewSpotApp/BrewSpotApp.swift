@@ -7,6 +7,8 @@ struct BrewSpotApp: App {
     @StateObject private var reviewStore = ReviewStore()
     @StateObject private var cafeListViewModel = CafeListViewModel()
     @StateObject private var toastCenter = AppToastCenter()
+    @StateObject private var userPreferenceStore = UserPreferenceStore()
+    @StateObject private var locationStore = LocationStore()
 
     var body: some Scene {
         WindowGroup {
@@ -16,6 +18,8 @@ struct BrewSpotApp: App {
                 .environmentObject(reviewStore)
                 .environmentObject(cafeListViewModel)
                 .environmentObject(toastCenter)
+                .environmentObject(userPreferenceStore)
+                .environmentObject(locationStore)
                 .task {
                     await sessionStore.bootstrap()
                 }

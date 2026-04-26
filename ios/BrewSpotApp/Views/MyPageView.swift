@@ -6,6 +6,9 @@ struct MyPageView: View {
     @EnvironmentObject private var bookmarkStore: BookmarkStore
     @EnvironmentObject private var reviewStore: ReviewStore
     @EnvironmentObject private var cafeListViewModel: CafeListViewModel
+    @EnvironmentObject private var toastCenter: AppToastCenter
+    @EnvironmentObject private var userPreferenceStore: UserPreferenceStore
+    @State private var isPresentingProfileEditor = false
 
     var body: some View {
         NavigationStack {
@@ -30,6 +33,27 @@ struct MyPageView: View {
                 await cafeListViewModel.loadIfNeeded()
                 await bookmarkStore.refresh()
                 await reviewStore.refreshMyReviews(using: cafeListViewModel.cafes)
+            }
+            .sheet(isPresented: $isPresentingProfileEditor) {
+                ProfilePreferencesView(
+                    initialNickname: sessionStore.currentUser?.nickname ?? "",
+                    initialPreferences: userPreferenceStore.preferences,
+                    availableCities: availableCities,
+                    availableTags: availableVibeTags
+                ) { submission in
+                    try await sessionStore.updateNickname(submission.nickname)
+                    userPreferenceStore.save(
+                        preferredCity: submission.preferredCity,
+                        favoriteVibeTags: submission.favoriteVibeTags,
+                        profileNote: submission.profileNote
+                    )
+                    toastCenter.showSuccess(
+                        title: "프로필을 업데이트했어요",
+                        message: "취향과 기본 정보를 저장했어요.",
+                        systemImage: "person.crop.circle.badge.checkmark"
+                    )
+                }
+                .presentationDetents([.large])
             }
         }
     }
@@ -130,18 +154,30 @@ struct MyPageView: View {
 
                 Spacer()
 
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.18))
-                        .frame(width: 64, height: 64)
+                VStack(alignment: .trailing, spacing: 10) {
+                    Button("프로필 편집") {
+                        isPresentingProfileEditor = true
+                    }
+                    .font(.footnote.weight(.semibold))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.white.opacity(0.16))
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule())
 
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundStyle(.white)
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.18))
+                            .frame(width: 64, height: 64)
+
+                        Image(systemName: "person.crop.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundStyle(.white)
+                    }
                 }
             }
 
-            Text("좋아하는 공간을 저장하고 리뷰를 남기며, 나만의 카페 취향을 차분하게 쌓아가는 브루 기록이에요.")
+            Text(profileNote ?? "좋아하는 공간을 저장하고 리뷰를 남기며, 나만의 카페 취향을 차분하게 쌓아가는 브루 기록이에요.")
                 .font(.subheadline)
                 .foregroundStyle(Color.white.opacity(0.84))
 
@@ -152,7 +188,7 @@ struct MyPageView: View {
 
             HStack(spacing: 8) {
                 infoPill(title: favoriteTags.isEmpty ? "취향 태그 준비 중" : "\(favoriteTags.count)개 취향 태그", systemImage: "tag.fill")
-                infoPill(title: exploredCategories.isEmpty ? "첫 셀렉션 전" : exploredCategories.prefix(2).joined(separator: " • "), systemImage: "sparkles")
+                infoPill(title: preferredCity ?? (exploredCategories.isEmpty ? "첫 셀렉션 전" : exploredCategories.prefix(2).joined(separator: " • ")), systemImage: preferredCity == nil ? "sparkles" : "mappin.circle.fill")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -283,18 +319,50 @@ struct MyPageView: View {
 
     private var preferenceSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("취향 태그")
-                .font(.headline)
+            HStack {
+                Text("취향 태그")
+                    .font(.headline)
 
-            if favoriteTags.isEmpty {
+                Spacer()
+
+                Button("편집") {
+                    isPresentingProfileEditor = true
+                }
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Color.brewBrown)
+            }
+
+            if favoriteTags.isEmpty, preferredCity == nil, profileNote == nil {
                 emptyStateCard(
                     title: "취향 태그가 아직 없어요",
-                    message: "카페를 저장하면 분위기 태그를 바탕으로 취향 키워드가 여기에 정리돼요.",
+                    message: "카페를 저장하거나 프로필 편집에서 직접 취향을 고르면 여기에서 정리돼요.",
                     systemImage: "tag",
-                    hint: "저장한 공간이 쌓일수록 취향도 더 또렷해져요."
+                    hint: "선호 동네와 분위기 태그를 먼저 골라둘 수도 있어요."
                 )
             } else {
-                FlowTagView(tags: favoriteTags)
+                VStack(alignment: .leading, spacing: 12) {
+                    if let preferredCity {
+                        preferenceSpotlightCard(
+                            title: "선호 동네",
+                            value: preferredCity,
+                            subtitle: "탐색 기준으로 먼저 떠올리고 싶은 지역이에요.",
+                            systemImage: "mappin.circle.fill"
+                        )
+                    }
+
+                    if let profileNote {
+                        preferenceSpotlightCard(
+                            title: "요즘 찾는 분위기",
+                            value: profileNote,
+                            subtitle: "프로필 편집에서 언제든 다시 바꿀 수 있어요.",
+                            systemImage: "text.quote"
+                        )
+                    }
+
+                    if !favoriteTags.isEmpty {
+                        FlowTagView(tags: favoriteTags)
+                    }
+                }
             }
         }
     }
@@ -380,11 +448,33 @@ struct MyPageView: View {
     }
 
     private var favoriteTags: [String] {
-        Array(Set(bookmarkedCafes.flatMap(\.vibeTags))).sorted()
+        if !userPreferenceStore.preferences.favoriteVibeTags.isEmpty {
+            return userPreferenceStore.preferences.favoriteVibeTags
+        }
+
+        return Array(Set(bookmarkedCafes.flatMap(\.vibeTags))).sorted()
     }
 
     private var exploredCategories: [String] {
         Array(Set(bookmarkedCafes.map(\.category))).sorted()
+    }
+
+    private var preferredCity: String? {
+        let explicitCity = userPreferenceStore.preferences.preferredCity.trimmingCharacters(in: .whitespacesAndNewlines)
+        return explicitCity.isEmpty ? nil : explicitCity
+    }
+
+    private var profileNote: String? {
+        let note = userPreferenceStore.preferences.profileNote.trimmingCharacters(in: .whitespacesAndNewlines)
+        return note.isEmpty ? nil : note
+    }
+
+    private var availableCities: [String] {
+        Array(Set(cafes.map(\.city))).sorted()
+    }
+
+    private var availableVibeTags: [String] {
+        Array(Set(cafes.flatMap(\.vibeTags))).sorted()
     }
 
     private func cafe(id: UUID) -> Cafe? {
@@ -409,6 +499,42 @@ struct MyPageView: View {
             Text(caption)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(Color.white.opacity(0.82))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+    }
+
+    private func preferenceSpotlightCard(title: String, value: String, subtitle: String, systemImage: String) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: systemImage)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Color.brewBrown)
+                .frame(width: 36, height: 36)
+                .background(Color.brewLatte)
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Text(value)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+            }
+
+            Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
@@ -797,4 +923,6 @@ private struct FlowTagView: View {
         .environmentObject(BookmarkStore())
         .environmentObject(ReviewStore())
         .environmentObject(CafeListViewModel())
+        .environmentObject(AppToastCenter())
+        .environmentObject(UserPreferenceStore())
 }

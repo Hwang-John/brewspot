@@ -25,6 +25,8 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>BrewSpot에서 내 주변 카페를 보여드리기 위해 현재 위치를 사용합니다.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 </dict>

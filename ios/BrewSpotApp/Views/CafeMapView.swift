@@ -1,7 +1,10 @@
 import SwiftUI
 import MapKit
+import UIKit
 
 struct CafeMapView: View {
+    @Environment(\.openURL) private var openURL
+    @EnvironmentObject private var locationStore: LocationStore
     let cafes: [Cafe]
     @Binding var selectedCafe: Cafe?
 
@@ -12,6 +15,10 @@ struct CafeMapView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             Map(position: $cameraPosition) {
+                if locationStore.isAuthorized, locationStore.currentLocation != nil {
+                    UserAnnotation()
+                }
+
                 ForEach(cafes) { cafe in
                     Annotation(cafe.name, coordinate: cafe.coordinate, anchor: .bottom) {
                         Button {
@@ -37,23 +44,53 @@ struct CafeMapView: View {
             .cornerRadius(20)
             .shadow(radius: 4)
             .overlay(alignment: .topLeading) {
-                HStack(spacing: 10) {
-                    Label("\(cafes.count)곳 표시 중", systemImage: "map")
-                        .font(.footnote.weight(.semibold))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Capsule())
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) {
+                        Label("\(cafes.count)곳 표시 중", systemImage: "map")
+                            .font(.footnote.weight(.semibold))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
 
-                    if cafes.count > 1 {
-                        Button("전체 보기") {
-                            selectedCafe = nil
-                            focusedCafe = nil
-                            fitMapToVisibleCafes(animated: true)
+                        Button(locationButtonTitle) {
+                            handleLocationButtonTap()
                         }
                         .font(.footnote.weight(.semibold))
                         .buttonStyle(.bordered)
                         .tint(Color.brewBrown)
+
+                        if cafes.count > 1 {
+                            Button("전체 보기") {
+                                selectedCafe = nil
+                                focusedCafe = nil
+                                fitMapToVisibleCafes(animated: true)
+                            }
+                            .font(.footnote.weight(.semibold))
+                            .buttonStyle(.bordered)
+                            .tint(Color.brewBrown)
+                        }
+                    }
+
+                    if let nearestCafe, let distanceText = locationStore.distanceText(to: nearestCafe.coordinate) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("가장 가까운 카페")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+
+                            HStack(spacing: 6) {
+                                Text(nearestCafe.name)
+                                    .font(.footnote.weight(.semibold))
+
+                                Text(distanceText)
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(Color.brewBrown)
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                 }
                 .padding(16)
@@ -108,12 +145,17 @@ struct CafeMapView: View {
         .frame(height: 420)
         .padding(.horizontal)
         .onAppear {
+            locationStore.refreshLocationIfAuthorized()
             syncMapRegion(animated: false)
         }
         .onChange(of: cafeIDs) { _, _ in
             syncMapRegion(animated: true)
         }
         .onChange(of: selectedCafe?.id) { _, _ in
+            syncMapRegion(animated: true)
+        }
+        .onChange(of: locationStore.currentLocation?.timestamp) { _, _ in
+            guard selectedCafe == nil else { return }
             syncMapRegion(animated: true)
         }
         .sheet(item: $presentedCafe) { cafe in
@@ -123,6 +165,23 @@ struct CafeMapView: View {
 
     private var cafeIDs: [UUID] {
         cafes.map(\.id)
+    }
+
+    private var nearestCafe: Cafe? {
+        locationStore.nearestCafe(in: cafes)
+    }
+
+    private var locationButtonTitle: String {
+        switch locationStore.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            return "내 위치"
+        case .denied, .restricted:
+            return "설정 열기"
+        case .notDetermined:
+            return "위치 사용"
+        @unknown default:
+            return "위치"
+        }
     }
 
     private func isSelected(_ cafe: Cafe) -> Bool {
@@ -160,8 +219,13 @@ struct CafeMapView: View {
     }
 
     private func fitMapToVisibleCafes(animated: Bool) {
+        if cafes.isEmpty, let userRegion = regionForCurrentLocation() {
+            updateRegion(userRegion, animated: animated)
+            return
+        }
+
         guard let firstCafe = cafes.first else {
-            updateRegion(Self.defaultRegion, animated: animated)
+            updateRegion(regionForCurrentLocation() ?? Self.defaultRegion, animated: animated)
             return
         }
 
@@ -193,6 +257,34 @@ struct CafeMapView: View {
         updateRegion(MKCoordinateRegion(center: center, span: span), animated: animated)
     }
 
+    private func handleLocationButtonTap() {
+        switch locationStore.authorizationStatus {
+        case .notDetermined:
+            locationStore.requestWhenInUseAuthorization()
+        case .authorizedAlways, .authorizedWhenInUse:
+            locationStore.refreshLocationIfAuthorized()
+            if let userRegion = regionForCurrentLocation() {
+                focusedCafe = nil
+                selectedCafe = nil
+                updateRegion(userRegion, animated: true)
+            }
+        case .denied, .restricted:
+            guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
+            openURL(settingsURL)
+        @unknown default:
+            break
+        }
+    }
+
+    private func regionForCurrentLocation() -> MKCoordinateRegion? {
+        guard let currentLocation = locationStore.currentLocation else { return nil }
+
+        return MKCoordinateRegion(
+            center: currentLocation.coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
+        )
+    }
+
     private func updateRegion(_ newRegion: MKCoordinateRegion, animated: Bool) {
         if animated {
             withAnimation(.easeInOut(duration: 0.25)) {
@@ -211,4 +303,5 @@ struct CafeMapView: View {
 
 #Preview {
     CafeMapView(cafes: Cafe.sampleCafes, selectedCafe: .constant(nil))
+        .environmentObject(LocationStore())
 }

@@ -43,8 +43,6 @@
 
 현재 코드/설정 기준으로 아래 항목은 수집하지 않는 쪽으로 본다.
 
-- 정확한 위치
-- 대략적 위치
 - 사진 또는 동영상
 - 연락처
 - 검색 기록
@@ -55,9 +53,9 @@
 
 ## 5. 근거 메모
 
-- `Info.plist`에 위치, 사진, 카메라, 알림 권한 설명 키 없음
+- `Info.plist`에 `NSLocationWhenInUseUsageDescription`이 있으며 앱은 현재 위치를 지도 이동과 거리 계산에 사용한다
 - 현재 로그인 수단은 `email`
-- 지도는 카페 좌표 표시용이며 사용자 현재 위치 권한 요청 없음
+- 현재 구현에는 위치를 서버에 저장하거나 전송하는 코드가 없음
 - 앱 내 광고/추적 SDK 연결 없음
 
 ## 6. 제출 전 최종 확인
@@ -65,4 +63,4 @@
 - [ ] Supabase 외 외부 SDK 추가 여부 재확인
 - [ ] 에러 로그/운영 로그를 App Privacy의 Diagnostics로 볼지 결정
 - [ ] App Store Connect 답변과 `PRIVACY_POLICY_DRAFT.md` 문구 일치 확인
-- [ ] 향후 위치 기반 기능 추가 시 답변 수정
+- [ ] 현재 위치 접근이 `Collected Data`에 해당하는지 App Store Connect 기준으로 최종 재확인

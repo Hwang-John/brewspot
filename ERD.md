@@ -4,7 +4,7 @@
 
 ## 1. 목적
 
-이 문서는 현재 BrewSpot MVP에서 실제로 쓰는 데이터 구조와, 2차 이후 확장 후보를 분리해서 정리한다.
+이 문서는 현재 BrewSpot MVP에서 실제로 쓰는 서버 데이터 구조와, 앱 로컬 상태, 2차 이후 확장 후보를 분리해서 정리한다.
 
 ## 2. 현재 MVP 테이블
 
@@ -135,7 +135,25 @@ erDiagram
 1. 사용자가 저장한 카페 관계 테이블
 2. `user_id + cafe_id` unique 기준
 
-## 5. 현재 제약 조건 기준
+## 5. 현재 앱 로컬 상태
+
+현재 앱은 서버 테이블 외에 아래 상태를 기기 로컬에서 관리한다.
+
+### user_preference_store
+
+1. 저장 위치: 앱 로컬 `UserDefaults`
+2. 현재 필드: `preferred_city`, `favorite_vibe_tags`, `profile_note`
+3. 목적: 프로필 편집과 취향 입력을 빠르게 시작하고, 원격 스키마 확장 전 UI를 검증하기 위함
+4. 현재는 계정 간 동기화가 되지 않으며 같은 기기 안에서만 유지된다
+
+### location_state
+
+1. 저장 위치: 메모리 상태
+2. 현재 필드: `authorization_status`, `current_coordinate`, `place_summary`
+3. 목적: 지도의 `내 위치` 이동, 거리 표시, 가장 가까운 카페 안내
+4. 현재 구현에는 서버 저장이나 백그라운드 추적이 없다
+
+## 6. 현재 제약 조건 기준
 
 1. `users.nickname` unique
 2. `user_identities(provider, provider_user_id)` unique
@@ -144,7 +162,7 @@ erDiagram
 5. `cafes(name, address)` unique index 기준으로 upsert
 6. `users.id`는 `auth.users(id)`를 참조
 
-## 6. 현재 트리거 / 동기화 기준
+## 7. 현재 트리거 / 동기화 기준
 
 1. `handle_new_auth_user()`
    `auth.users` 생성 시 `public.users`, `public.user_identities` 보장
@@ -153,18 +171,19 @@ erDiagram
 3. `set_updated_at()`
    `users`, `cafes`, `reviews`의 `updated_at` 자동 갱신
 
-## 7. 현재 문서와 스키마 연결
+## 8. 현재 문서와 스키마 연결
 
 1. 실제 스키마 기준 문서는 `SUPABASE_MINI_SCHEMA.sql`
 2. 스키마 반영 여부 확인은 `SUPABASE_VERIFY.sql`
 3. 시드 기준 문서는 `CAFE_SEED_TEMPLATE.csv`, `REVIEW_SEED_TEMPLATE.csv`
 4. 회원가입 트리거 오류 수정 문서는 `SUPABASE_AUTH_TRIGGER_FIX.sql`
 
-## 8. 2차 이후 확장 후보
+## 9. 2차 이후 확장 후보
 
 현재 구현에는 없지만 이후 확장 후보는 아래와 같다.
 
 1. `user_preferences`
+   선호 지역, 취향 태그, 프로필 메모를 계정 단위로 동기화할 때 우선 도입
 2. `cafe_menus`
 3. `review_images`
 4. `visit_logs`
@@ -174,3 +193,8 @@ erDiagram
 8. `reports`
 9. `rank_snapshots`
 10. `audit_logs`
+
+추가 메모:
+
+1. 현재 위치 자체를 서버 테이블로 저장하는 확장은 우선순위가 낮다.
+2. 위치 기능은 가능한 한 `온디바이스 계산 우선` 원칙으로 유지하고, 서버 적재가 필요할 때만 별도 테이블을 검토한다.

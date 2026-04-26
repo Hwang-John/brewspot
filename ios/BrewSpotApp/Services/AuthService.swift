@@ -27,4 +27,8 @@ struct AuthService {
     func fetchCurrentUserProfile() async throws -> AppUser? {
         try await userProfileService.ensureCurrentUserProfile()
     }
+
+    func updateCurrentUserProfile(nickname: String) async throws -> AppUser {
+        try await userProfileService.updateCurrentUserProfile(nickname: nickname)
+    }
 }

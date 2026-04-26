@@ -3,6 +3,8 @@ import SwiftUI
 struct RootView: View {
     @EnvironmentObject private var sessionStore: SessionStore
     @EnvironmentObject private var toastCenter: AppToastCenter
+    @EnvironmentObject private var userPreferenceStore: UserPreferenceStore
+    @EnvironmentObject private var locationStore: LocationStore
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -29,5 +31,11 @@ struct RootView: View {
             }
         }
         .animation(.spring(duration: 0.28), value: toastCenter.item)
+        .task(id: sessionStore.currentUser?.id) {
+            userPreferenceStore.load(for: sessionStore.currentUser?.id)
+        }
+        .task {
+            locationStore.refreshLocationIfAuthorized()
+        }
     }
 }

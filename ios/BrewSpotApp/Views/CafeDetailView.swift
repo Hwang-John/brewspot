@@ -5,6 +5,7 @@ struct CafeDetailView: View {
     @EnvironmentObject private var reviewStore: ReviewStore
     @EnvironmentObject private var sessionStore: SessionStore
     @EnvironmentObject private var toastCenter: AppToastCenter
+    @EnvironmentObject private var locationStore: LocationStore
     let cafe: Cafe
     @State private var isPresentingReviewComposer = false
     @State private var isTogglingBookmark = false
@@ -186,6 +187,14 @@ struct CafeDetailView: View {
 
             Label(cafe.address, systemImage: "mappin.and.ellipse")
             Label("\(String(format: "%.4f", cafe.latitude)), \(String(format: "%.4f", cafe.longitude))", systemImage: "location")
+
+            if let distanceText = locationStore.distanceText(to: cafe.coordinate) {
+                Label("현재 위치에서 \(distanceText)", systemImage: "figure.walk")
+            }
+
+            if let placeSummary = locationStore.placeSummary {
+                Label("현재 위치 기준: \(placeSummary)", systemImage: "location.circle")
+            }
         }
         .font(.subheadline)
         .foregroundStyle(.secondary)
@@ -493,4 +502,6 @@ struct CafeDetailView: View {
     .environmentObject(SessionStore())
     .environmentObject(BookmarkStore())
     .environmentObject(ReviewStore())
+    .environmentObject(AppToastCenter())
+    .environmentObject(LocationStore())
 }

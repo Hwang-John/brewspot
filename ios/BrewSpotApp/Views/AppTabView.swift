@@ -30,4 +30,7 @@ struct AppTabView: View {
         .environmentObject(BookmarkStore())
         .environmentObject(ReviewStore())
         .environmentObject(CafeListViewModel())
+        .environmentObject(AppToastCenter())
+        .environmentObject(UserPreferenceStore())
+        .environmentObject(LocationStore())
 }
