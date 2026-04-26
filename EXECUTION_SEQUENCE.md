@@ -33,23 +33,23 @@ Codex 작업:
 1. `SUPABASE_APPLY_CHECKLIST.md`
 2. `TEST_ACCOUNT_SETUP_CHECKLIST.md`
 
-## 2. 2순위: Provider 활성화
+## 2. 2순위: Email Auth 점검
 
 사용자 작업:
-1. Supabase `Authentication > Providers > Google` 활성화
-2. Supabase `Authentication > Providers > Apple` 활성화
-3. Google Cloud Console / Apple Developer 설정값 입력
-4. Redirect URL / Bundle ID / URL Scheme 일치 확인
+1. Supabase `Authentication > Providers > Email` 상태 확인
+2. 회원가입 허용 여부 확인
+3. 필요 시 `SUPABASE_AUTH_TRIGGER_FIX.sql` 적용
+4. 테스트 계정 로그인 가능 상태 확인
 
 Codex 작업:
-1. 앱 고정값 문서 유지
+1. 앱 로그인 UI를 이메일 전용 기준으로 유지
 2. 실패 시 점검 포인트 정리
-3. 시뮬레이터에서 버튼 동작 확인 준비
+3. 시뮬레이터에서 이메일 로그인 동작 확인 준비
 
 정상 기준:
-1. `google=true`
-2. `apple=true`
-3. OAuth 완료 후 앱 복귀 가능
+1. `email=true`
+2. 이메일 로그인과 회원가입이 모두 동작
+3. 사용자 프로필 생성 흐름이 깨지지 않음
 
 관련 문서:
 1. `AUTH_PROVIDER_SETUP_CHECKLIST.md`
@@ -58,7 +58,7 @@ Codex 작업:
 
 사용자 작업:
 1. 준비된 테스트 계정으로 로그인
-2. Google / Apple 실제 인증 진행
+2. 신규 이메일 회원가입 진행
 3. 필요 시 Supabase 콘솔에서 결과 확인
 
 Codex 작업:
@@ -80,5 +80,5 @@ Codex 작업:
 
 1. 사용자: Supabase 실반영부터 시작
 2. Codex: 시뮬레이터 빌드/실행 준비
-3. 사용자: Provider 활성화
-4. Codex: 이메일 / Google / Apple QA 순서로 검증 지원
+3. 사용자: Email Provider 상태 점검
+4. Codex: 이메일 QA 순서로 검증 지원

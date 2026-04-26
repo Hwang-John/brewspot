@@ -45,10 +45,7 @@ struct SignUpView: View {
 
                 Button {
                     Task {
-                        let success = await viewModel.signUp()
-                        if success {
-                            dismiss()
-                        }
+                        _ = await viewModel.signUp()
                     }
                 } label: {
                     if viewModel.isLoading {
@@ -61,7 +58,22 @@ struct SignUpView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Color.brewBrown)
-                .disabled(viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.nickname.isEmpty || viewModel.isLoading)
+                .disabled(
+                    viewModel.email.isEmpty ||
+                    viewModel.password.isEmpty ||
+                    viewModel.nickname.isEmpty ||
+                    viewModel.isLoading ||
+                    viewModel.infoMessage != nil
+                )
+
+                if viewModel.infoMessage != nil {
+                    Button("로그인 화면으로 돌아가기") {
+                        dismiss()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.bordered)
+                    .tint(Color.brewBrown)
+                }
             }
             .padding(24)
         }

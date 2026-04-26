@@ -11,7 +11,7 @@
 - [ ] 카페 24개 시드 반영
 - [ ] 리뷰 36개 시드 반영
 - [ ] 테스트 계정 준비
-- [ ] Google / Apple Provider 활성화 여부 확인
+- [ ] Email Provider 활성화 여부 확인
 
 ## 2. 이메일 로그인 기본 흐름
 
@@ -61,31 +61,7 @@
 - 저장/해제가 즉시 UI에 반영된다
 - 저장 목록과 상세 화면 상태가 일치한다
 
-## 6. Google 로그인
-
-- [ ] Google 로그인 버튼 탭
-- [ ] 브라우저 또는 인증 화면으로 이동하는지 확인
-- [ ] 로그인 완료 후 앱으로 복귀하는지 확인
-- [ ] 세션이 정상 생성되는지 확인
-
-실패 시 확인:
-- Supabase Provider 활성화 여부
-- Redirect URL: `com.hwangjohn.brewspot://login-callback`
-- iOS URL Scheme: `com.hwangjohn.brewspot`
-
-## 7. Apple 로그인
-
-- [ ] Apple 로그인 버튼 탭
-- [ ] Apple 인증 시트가 열리는지 확인
-- [ ] 로그인 완료 후 앱으로 복귀하는지 확인
-- [ ] 세션이 정상 생성되는지 확인
-
-실패 시 확인:
-- Supabase Provider 활성화 여부
-- Bundle ID 일치 여부
-- Redirect URL: `com.hwangjohn.brewspot://login-callback`
-
-## 8. 예외 / 빈 데이터 / 실패 상황
+## 6. 예외 / 빈 데이터 / 실패 상황
 
 - [ ] 네트워크 차단 상태에서 에러 메시지 확인
 - [ ] 로그인 실패 시 문구 확인
@@ -97,7 +73,7 @@
 - 로딩 중인지 실패인지 구분된다
 - 빈 상태 문구가 어색하지 않다
 
-## 9. 기록 메모
+## 7. 기록 메모
 
 - 테스트 일시:
 - 테스트 환경:

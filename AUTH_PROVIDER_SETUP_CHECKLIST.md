@@ -1,10 +1,10 @@
-# BrewSpot Auth Provider 설정 체크리스트
+# BrewSpot Email Auth 설정 체크리스트
 
 최종 기준일: 2026-04-26
 
 ## 목적
 
-이 문서는 BrewSpot iOS 앱의 Email / Google / Apple 로그인 설정 시, 앱 코드와 Supabase 콘솔에서 맞춰야 하는 값을 한 번에 정리한다.
+이 문서는 BrewSpot iOS 앱을 이메일 로그인 전용으로 운영할 때, Supabase 콘솔과 앱 코드에서 확인해야 할 항목을 정리한다.
 
 ## 현재 앱 고정값
 
@@ -13,14 +13,11 @@
 1. Supabase URL: `https://ahlstavrnnwydzxwwnbq.supabase.co`
 2. Supabase Project Ref: `ahlstavrnnwydzxwwnbq`
 3. iOS Bundle ID: `com.hwangjohn.brewspot`
-4. URL Scheme: `com.hwangjohn.brewspot`
-5. Redirect URL: `com.hwangjohn.brewspot://login-callback`
 
 관련 파일:
 
 1. `ios/BrewSpotApp/Config/AppConfig.swift`
-2. `ios/BrewSpotApp/Info.plist`
-3. `ios/project.yml`
+2. `ios/project.yml`
 
 ## 1. Email Provider
 
@@ -50,89 +47,42 @@ Supabase `Authentication > Providers > Email`
 
 1. 공개 Auth API 회원가입 테스트에서 `Database error saving new user` 응답 확인
 2. 따라서 Provider 설정 전 `SUPABASE_AUTH_TRIGGER_FIX.sql` 적용 여부도 같이 봐야 함
+3. 2026-04-26 회원가입 API 재확인 시 `429 over_email_send_rate_limit` 응답이 확인됨
+4. 테스트 중 반복 회원가입 시 인증 메일 발송 제한에 걸릴 수 있으므로 기존 테스트 계정 로그인이나 Dashboard 수동 계정 생성도 같이 준비하는 것이 안전함
 
-## 2. Google Provider
+## 2. 현재 버전에서 제외한 Provider
 
-위치:
-Supabase `Authentication > Providers > Google`
-
-필수 확인값:
-
-1. Enabled
-2. Client ID
-3. Client Secret
-4. Redirect URL
-
-앱 기준 체크:
-
-1. 앱은 Google OAuth 버튼을 이미 호출함
-2. Redirect URL은 `com.hwangjohn.brewspot://login-callback`
-3. URL Scheme은 `com.hwangjohn.brewspot`
-
-현재 확인 메모:
-
-1. `google=false` 상태로 확인됨
-2. 2026-04-26 `GET /auth/v1/settings` 응답 기준 여전히 비활성화
-3. 즉, 앱 코드가 있어도 지금은 실제 로그인 성공 불가
-
-정상 기준:
-
-1. Supabase Google Provider 활성화
-2. Google Cloud Console에 Supabase / 앱 redirect 설정 반영
-3. 앱에서 Google 로그인 후 BrewSpot으로 복귀
-
-## 3. Apple Provider
-
-위치:
-Supabase `Authentication > Providers > Apple`
-
-필수 확인값:
+현재 MVP에서는 아래 Provider를 앱에서 노출하지 않는다.
 
 1. Enabled
-2. Services ID
-3. Team ID
-4. Key ID
-5. Private Key
-6. Redirect URL
+2. Google
+3. Apple
 
-앱 기준 체크:
+권장 상태:
 
-1. Bundle ID는 `com.hwangjohn.brewspot`
-2. Redirect URL은 `com.hwangjohn.brewspot://login-callback`
-3. URL Scheme은 `com.hwangjohn.brewspot`
+1. Supabase Console에서 Google / Apple Provider를 비활성화 상태로 유지
+2. 앱 로그인 화면에서 Email 외 버튼이 노출되지 않음
+3. App Review 메모와 제출 문서도 Email 기준으로만 작성
 
-현재 확인 메모:
+## 3. 공통 점검
 
-1. `apple=false` 상태로 확인됨
-2. 2026-04-26 `GET /auth/v1/settings` 응답 기준 여전히 비활성화
-3. 즉, 앱 코드가 있어도 지금은 실제 로그인 성공 불가
+1. 로그인 화면에 이메일 입력, 비밀번호 입력, 로그인 버튼, 회원가입 진입만 보이는지
+2. 로그인 직후 `public.users`가 기대대로 채워지는지
+3. 실패 시 사용자에게 에러 문구가 표시되는지
+4. 이메일 인증이 필요한 경우 안내 문구가 표시되는지
 
-정상 기준:
+## 4. 실패 시 먼저 볼 것
 
-1. Supabase Apple Provider 활성화
-2. Apple Developer 설정과 Supabase 값 일치
-3. 앱에서 Apple 로그인 후 BrewSpot으로 복귀
+1. Email Provider가 실제로 Enabled인지
+2. 회원가입 허용이 켜져 있는지
+3. `SUPABASE_AUTH_TRIGGER_FIX.sql`이 반영되어 있는지
+4. Supabase 프로젝트가 앱이 바라보는 프로젝트와 같은지
+5. 이메일 인증 정책이 현재 QA 방식과 맞는지
+6. `over_email_send_rate_limit`로 인증 메일 발송 제한에 걸린 상태가 아닌지
 
-## 4. 공통 점검
-
-1. 앱에서 로그인 버튼 탭 시 웹 인증 또는 시스템 인증이 시작되는지
-2. 인증 후 BrewSpot 앱으로 다시 돌아오는지
-3. 로그인 직후 `public.users`와 `public.user_identities`가 기대대로 채워지는지
-4. 실패 시 사용자에게 에러 문구가 표시되는지
-
-## 5. 실패 시 먼저 볼 것
-
-1. Provider가 실제로 Enabled인지
-2. Redirect URL이 `com.hwangjohn.brewspot://login-callback`와 정확히 같은지
-3. iOS URL Scheme가 `com.hwangjohn.brewspot`인지
-4. Bundle ID가 `com.hwangjohn.brewspot`인지
-5. Supabase 프로젝트가 앱이 바라보는 프로젝트와 같은지
-
-## 6. 실제 확인 순서
+## 5. 실제 확인 순서
 
 1. Email Provider 상태 확인
-2. Google Provider 활성화
-3. Apple Provider 활성화
-4. Xcode 시뮬레이터에서 Google 로그인 확인
-5. Xcode 시뮬레이터에서 Apple 로그인 확인
-6. `SUPABASE_VERIFY.sql`과 `public.user_identities`로 로그인 결과 확인
+2. Xcode 시뮬레이터에서 이메일 로그인 확인
+3. 이메일 회원가입 확인
+4. `SUPABASE_VERIFY.sql`과 `public.users`로 로그인 결과 확인

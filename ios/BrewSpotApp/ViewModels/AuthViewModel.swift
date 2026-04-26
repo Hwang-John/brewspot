@@ -52,34 +52,6 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
-    func signInWithGoogle(sessionStore: SessionStore) async {
-        errorMessage = nil
-        infoMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            try await authService.signInWithGoogle()
-            await sessionStore.refreshCurrentUser()
-        } catch {
-            errorMessage = mapOAuthError(error, providerName: "Google")
-        }
-    }
-
-    func signInWithApple(sessionStore: SessionStore) async {
-        errorMessage = nil
-        infoMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            try await authService.signInWithApple()
-            await sessionStore.refreshCurrentUser()
-        } catch {
-            errorMessage = mapOAuthError(error, providerName: "Apple")
-        }
-    }
-
     private func mapEmailSignInError(_ error: Error) -> String {
         let description = normalizedDescription(for: error)
 
@@ -113,23 +85,12 @@ final class AuthViewModel: ObservableObject {
             return "현재 이메일 회원가입이 비활성화되어 있어요. 설정을 확인해주세요."
         }
 
+        if description.contains("over_email_send_rate_limit") || description.contains("email rate limit exceeded") {
+            return "인증 메일 요청이 너무 많아 잠시 회원가입이 제한되었어요. 잠시 후 다시 시도하거나 기존 테스트 계정을 사용해주세요."
+        }
+
         return "회원가입에 실패했습니다. 잠시 후 다시 시도해주세요."
     }
-
-    private func mapOAuthError(_ error: Error, providerName: String) -> String {
-        let description = normalizedDescription(for: error)
-
-        if description.contains("provider is not enabled") || description.contains("unsupported provider") {
-            return "\(providerName) 로그인이 아직 활성화되지 않았어요. Supabase Provider 설정을 확인해주세요."
-        }
-
-        if description.contains("cancel") {
-            return "\(providerName) 로그인이 취소되었습니다."
-        }
-
-        return "\(providerName) 로그인에 실패했습니다. Provider 설정과 redirect 구성을 확인해주세요."
-    }
-
     private func normalizedDescription(for error: Error) -> String {
         let localized = error.localizedDescription
         let reflected = String(describing: error)

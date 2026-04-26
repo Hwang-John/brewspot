@@ -24,24 +24,6 @@ struct AuthService {
         try await client.auth.signOut()
     }
 
-    func signInWithGoogle() async throws {
-        _ = try await client.auth.signInWithOAuth(
-            provider: .google,
-            queryParams: [
-                (name: "prompt", value: "select_account"),
-                (name: "access_type", value: "offline")
-            ]
-        )
-        _ = try await userProfileService.ensureCurrentUserProfile()
-    }
-
-    func signInWithApple() async throws {
-        _ = try await client.auth.signInWithOAuth(
-            provider: .apple
-        )
-        _ = try await userProfileService.ensureCurrentUserProfile()
-    }
-
     func fetchCurrentUserProfile() async throws -> AppUser? {
         try await userProfileService.ensureCurrentUserProfile()
     }

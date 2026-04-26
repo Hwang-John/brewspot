@@ -14,8 +14,7 @@
 - v Supabase Swift 패키지 연결
 - v Supabase URL / Publishable Key 연결
 - v 이메일 로그인 / 회원가입 / 세션 확인 / 로그아웃 구현
-- v Google 로그인 버튼 및 OAuth 호출 연결
-- v Apple 로그인 버튼 및 OAuth 호출 연결
+- v 로그인 화면을 이메일 전용으로 정리
 - v 로그인 후 홈 진입 흐름 구현
 - v 지도 기반 카페 탐색 화면 구현
 - v 카페 상세 화면 구현
@@ -41,8 +40,6 @@
 ## 2. 지금 바로 확인해야 할 것
 - v Xcode 시뮬레이터에서 앱 전체 실행 확인
 - v 이메일 로그인 후 홈 진입, 카페 조회, 리뷰 작성, 북마크 동작 검증
-- [ ] Google 로그인 redirect / URL scheme / Supabase Provider 설정 실검증
-- [ ] Apple 로그인 redirect / Bundle 설정 / Supabase Provider 설정 실검증
 - v 리뷰 작성 후 상세 / 마이페이지 / 최근 활동 반영 흐름 검증
 - v 기본 앱 흐름 기준 빈 상태 문구와 화면 전환 정상 동작 확인
 - [ ] 네트워크 실패, 권한 문제, 강제 빈 데이터 상태에서 에러 문구/로딩 상태 점검
@@ -67,7 +64,7 @@
 - v Supabase 퍼블릭 조회 연결 확인 (`cafes`, `reviews`, `bookmarks` 응답 확인)
 - v `SUPABASE_VERIFY.sql`에 카페/리뷰 수량과 legacy 데이터 점검 쿼리 보강
 - v `SUPABASE_APPLY_CHECKLIST.md` 실제 반영 체크리스트 추가
-- v `AUTH_PROVIDER_SETUP_CHECKLIST.md` 로그인 Provider 설정 체크리스트 추가
+- v `AUTH_PROVIDER_SETUP_CHECKLIST.md` 이메일 로그인 설정 체크리스트로 정리
 - v `APP_STORE_METADATA_DRAFT.md` 앱스토어 메타데이터 초안 추가
 - v `APP_STORE_SCREENSHOT_PLAN.md` 앱스토어 스크린샷 구성안 추가
 - v `LAUNCH_VALUES_CHECKLIST.md` 출시 고정값 체크리스트 추가
@@ -93,25 +90,22 @@
 
 로컬 반영 완료:
 - v Email 로그인 기본 흐름
-- v Google 로그인 UI 및 AuthService 연결
-- v Apple 로그인 UI 및 AuthService 연결
+- v 로그인 화면과 인증 로직을 이메일 전용 기준으로 정리
 - v 계정 연결 정책 문서화
-- v Apple / Google / Kakao / Naver 우선순위 결정 정리
+- v Google / Apple / Kakao / Naver를 후순위 확장 대상으로 정리
 
 현재 결정:
-- v Apple 로그인은 iOS 앱에서 Google 같은 서드파티 로그인을 제공할 때 App Store 제출 전 대응 항목으로 본다.
+- v 현재 MVP 로그인 수단은 이메일만 유지한다.
+- v Google 로그인은 MVP 이후 작업으로 분리한다.
+- v Apple 로그인은 MVP 이후 작업으로 분리한다.
 - v Kakao 로그인은 2차 우선순위로 추가한다.
 - v Naver 로그인은 이번 버전에서는 보류한다.
 - v Supabase Auth 설정 확인 결과 `email=true`, `disable_signup=false`, `mailer_autoconfirm=false`
 
 남은 일:
-- [ ] Google Provider 콘솔 설정값 최종 확정
-- [ ] Apple Provider 콘솔 설정값 최종 확정
 - v 이메일 회원가입 시 `Database error saving new user`가 나면 `SUPABASE_AUTH_TRIGGER_FIX.sql` 실제 반영
-- [ ] 실제 로그인 성공/실패 케이스별 메시지 점검
+- v 실제 로그인 성공/실패 케이스별 메시지 점검
 - v Kakao 로그인 추가 여부를 MVP 이후 작업으로 분리
-- [ ] 2026-04-26 Supabase Auth 설정 응답 기준 현재 `google=false`, `apple=false` 상태라 Provider 활성화 필요
-- [ ] Google Provider 활성화 시 Supabase에서 `At least one Client ID is required when Google sign-in is enabled.` 오류가 확인되어 Google Cloud OAuth Client ID/Secret 준비 필요
 
 ## 5. 운영 준비
 
@@ -140,9 +134,11 @@
 - v 현재 MVP는 개인위치정보 미수집으로 별도 위치기반서비스 약관 비공개 유지
 - [ ] 앱스토어 제출용 설명/스크린샷 준비
 - [ ] 테스트 계정 준비
-현재 상태: Auth 계정 / `public.users` 정합성 / 카페 24개 / 리뷰 36개 반영과 앱 내 end-to-end QA는 확인 완료했고, OAuth는 Supabase Provider 비활성화 및 Google Client ID 미입력 상태까지 확인했다. 다음은 Google/Apple Provider 실설정과 출시 문서 마무리다
+현재 상태: Auth 계정 / `public.users` 정합성 / 카페 24개 / 리뷰 36개 반영과 앱 내 end-to-end QA는 확인 완료했고, 현재 MVP는 이메일 로그인 기준으로 정리했다. 다음은 이메일 QA 보강과 출시 문서 마무리다
 
 ## 7. 이번 버전에서 미루기
+- [ ] Google 로그인 구현
+- [ ] Apple 로그인 구현
 - [ ] Kakao 로그인 구현
 - [ ] Naver 로그인 구현
 - [ ] 커뮤니티 게시판
@@ -153,7 +149,7 @@
 
 ## 추천 작업 순서
 1. Supabase 최신 스키마 반영 및 `SUPABASE_VERIFY.sql` 실행
-2. Google Cloud OAuth Client ID/Secret 준비 후 Supabase Google Provider 활성화
-3. Apple Provider 설정값 준비 후 Supabase Apple Provider 활성화
-4. Xcode에서 Google / Apple 로그인 실제 동작 확인
+2. Email Provider / 회원가입 / auth trigger 상태 점검
+3. Xcode에서 이메일 로그인 / 회원가입 / 에러 문구 실제 동작 확인
+4. 네트워크 실패 / 빈 데이터 상태 QA
 5. 운영 정책 및 출시 문서 마무리
