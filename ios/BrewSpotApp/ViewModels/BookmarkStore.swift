@@ -2,6 +2,11 @@ import Foundation
 
 @MainActor
 final class BookmarkStore: ObservableObject {
+    enum ToggleResult {
+        case added
+        case removed
+    }
+
     @Published private(set) var bookmarkedCafeIDs: Set<UUID> = []
     @Published private(set) var isLoading = false
     @Published var errorMessage: String?
@@ -29,7 +34,7 @@ final class BookmarkStore: ObservableObject {
         }
     }
 
-    func toggle(_ cafe: Cafe) async {
+    func toggle(_ cafe: Cafe) async -> ToggleResult? {
         errorMessage = nil
 
         do {
@@ -37,13 +42,16 @@ final class BookmarkStore: ObservableObject {
                 try await bookmarkService.removeBookmark(cafeID: cafe.id)
                 bookmarkedCafeIDs.remove(cafe.id)
                 bookmarkTimestamps.removeValue(forKey: cafe.id)
+                return .removed
             } else {
                 let bookmark = try await bookmarkService.addBookmark(cafeID: cafe.id)
                 bookmarkedCafeIDs.insert(cafe.id)
                 bookmarkTimestamps[cafe.id] = bookmark.createdAt
+                return .added
             }
         } catch {
             errorMessage = "카페 저장 상태를 업데이트하지 못했어요."
+            return nil
         }
     }
 

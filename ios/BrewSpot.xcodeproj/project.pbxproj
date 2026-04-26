@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		00A7E3993FFDFB8A89812375 /* CafeReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 033F13EE2C1E5B50887EE86F /* CafeReview.swift */; };
 		020C582A3C493CC58F872A11 /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE2BC8A4D21BFF77CDBFA47 /* SignUpView.swift */; };
+		30E40E5295C8D568CE1A5F0E /* ErrorStateCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D8CD4F0DFC8529922ED0989 /* ErrorStateCard.swift */; };
 		3A1AF59477FC1DBC7F4255BE /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CAADD421AF947C1CB8A2FDB /* AuthService.swift */; };
 		3D06666350774F5A63200A5C /* UserProfileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEC1939AB2535EF7A03F3041 /* UserProfileService.swift */; };
 		455B96D7187930F5AE966966 /* Cafe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7C08DCFF80B7CD9CA1AD08D /* Cafe.swift */; };
@@ -27,18 +28,22 @@
 		A45C8475BC18AF8D38C92DD0 /* BookmarkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4473BC98CB3A59DBBB6DADD9 /* BookmarkService.swift */; };
 		A5B28DB6B68A7F071429FC0A /* AppTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33A8D7EEE8493CA8951287F4 /* AppTabView.swift */; };
 		A8E6AC74B0D9FCB6F055BF20 /* ReviewComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F36922D2830F2360926BF6 /* ReviewComposerView.swift */; };
+		AABE1BFD4D8DEBE26F37AE73 /* CafeArtworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08AD817959758ADBF63EE13 /* CafeArtworkView.swift */; };
 		B84CBF6216CC0309FA9F68B2 /* Color+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 480CBE5CF2D83878994C522E /* Color+Theme.swift */; };
 		BB10189746BD7F75F751DD1F /* CafeListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83E130F9067A4C28F6AB6BA4 /* CafeListViewModel.swift */; };
 		BE160C2F244D5C4B625DF58F /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3224FE9764E7E6D41102DBBF /* LoginView.swift */; };
 		D1D8BB228714E263D642D274 /* CafeHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F83139B7921C58B9CF480BEE /* CafeHomeView.swift */; };
+		D21A39BBD304C5F31942AFC6 /* ToastBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E78CBC2673C4F3492B8C1E03 /* ToastBannerView.swift */; };
 		D522290CFFA46000FB66EFD6 /* Cafe+Samples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE2D3140E4F673168858F9D /* Cafe+Samples.swift */; };
 		DB3ACC872A749C8F31565F7A /* CafeMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA610901534873D361D9BA03 /* CafeMapView.swift */; };
+		DBB22300ACC6C1668A9EDF21 /* AppToastCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCC1B3B1DF48F3A7BCAB9C3 /* AppToastCenter.swift */; };
 		E3402C16EEF4A3D1C21A852B /* ReviewStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C41A512F37B80F62B1D57BF /* ReviewStore.swift */; };
 		E8D0BEED37326496FC918264 /* BookmarkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63C7D75FBFE7F38E1DF11B41 /* BookmarkStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		033F13EE2C1E5B50887EE86F /* CafeReview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CafeReview.swift; sourceTree = "<group>"; };
+		0D8CD4F0DFC8529922ED0989 /* ErrorStateCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorStateCard.swift; sourceTree = "<group>"; };
 		1587383EA3C28C9C0431A7E3 /* AppUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUser.swift; sourceTree = "<group>"; };
 		19B816D8A7B9729949CF53FB /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		1AE2D3140E4F673168858F9D /* Cafe+Samples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Cafe+Samples.swift"; sourceTree = "<group>"; };
@@ -61,10 +66,13 @@
 		8817C2CE6EE309196312F9A5 /* SupabaseClientProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseClientProvider.swift; sourceTree = "<group>"; };
 		8C41A512F37B80F62B1D57BF /* ReviewStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewStore.swift; sourceTree = "<group>"; };
 		9BDDD5FAF0DE23C50287E5D4 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		ACCC1B3B1DF48F3A7BCAB9C3 /* AppToastCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppToastCenter.swift; sourceTree = "<group>"; };
+		C08AD817959758ADBF63EE13 /* CafeArtworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CafeArtworkView.swift; sourceTree = "<group>"; };
 		D40AE83B6CF293829974EC91 /* BrewSpotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrewSpotApp.swift; sourceTree = "<group>"; };
 		DA610901534873D361D9BA03 /* CafeMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CafeMapView.swift; sourceTree = "<group>"; };
 		DCCFC25AFC83BD550376BAA8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DEC1939AB2535EF7A03F3041 /* UserProfileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileService.swift; sourceTree = "<group>"; };
+		E78CBC2673C4F3492B8C1E03 /* ToastBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastBannerView.swift; sourceTree = "<group>"; };
 		F7C08DCFF80B7CD9CA1AD08D /* Cafe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cafe.swift; sourceTree = "<group>"; };
 		F83139B7921C58B9CF480BEE /* CafeHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CafeHomeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -124,6 +132,7 @@
 		947FCCA6A29381B54E58C9DE /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				ACCC1B3B1DF48F3A7BCAB9C3 /* AppToastCenter.swift */,
 				3B87BEBB794C3CAF101F7490 /* AuthViewModel.swift */,
 				63C7D75FBFE7F38E1DF11B41 /* BookmarkStore.swift */,
 				83E130F9067A4C28F6AB6BA4 /* CafeListViewModel.swift */,
@@ -137,14 +146,17 @@
 			isa = PBXGroup;
 			children = (
 				33A8D7EEE8493CA8951287F4 /* AppTabView.swift */,
+				C08AD817959758ADBF63EE13 /* CafeArtworkView.swift */,
 				7491FD846FF0563E2BC24BEA /* CafeDetailView.swift */,
 				F83139B7921C58B9CF480BEE /* CafeHomeView.swift */,
 				DA610901534873D361D9BA03 /* CafeMapView.swift */,
+				0D8CD4F0DFC8529922ED0989 /* ErrorStateCard.swift */,
 				3224FE9764E7E6D41102DBBF /* LoginView.swift */,
 				1DDB9B944779125B4F2E0D77 /* MyPageView.swift */,
 				25F36922D2830F2360926BF6 /* ReviewComposerView.swift */,
 				630875C8A2DFC9501F4A82E6 /* RootView.swift */,
 				6BE2BC8A4D21BFF77CDBFA47 /* SignUpView.swift */,
+				E78CBC2673C4F3492B8C1E03 /* ToastBannerView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -245,6 +257,7 @@
 			files = (
 				515C69ACE6FCF9BDFDEC8D37 /* AppConfig.swift in Sources */,
 				A5B28DB6B68A7F071429FC0A /* AppTabView.swift in Sources */,
+				DBB22300ACC6C1668A9EDF21 /* AppToastCenter.swift in Sources */,
 				9917E5577FD05D3D435A611A /* AppUser.swift in Sources */,
 				3A1AF59477FC1DBC7F4255BE /* AuthService.swift in Sources */,
 				8B9DE3586E53EC95BFD9483C /* AuthViewModel.swift in Sources */,
@@ -253,6 +266,7 @@
 				7ECAD62FF2E90DC2986C7D1E /* BrewSpotApp.swift in Sources */,
 				D522290CFFA46000FB66EFD6 /* Cafe+Samples.swift in Sources */,
 				455B96D7187930F5AE966966 /* Cafe.swift in Sources */,
+				AABE1BFD4D8DEBE26F37AE73 /* CafeArtworkView.swift in Sources */,
 				865FB7E28ED10C575BD7968C /* CafeDetailView.swift in Sources */,
 				D1D8BB228714E263D642D274 /* CafeHomeView.swift in Sources */,
 				BB10189746BD7F75F751DD1F /* CafeListViewModel.swift in Sources */,
@@ -260,6 +274,7 @@
 				00A7E3993FFDFB8A89812375 /* CafeReview.swift in Sources */,
 				97B88EB9674A7FFB02CCF891 /* CafeService.swift in Sources */,
 				B84CBF6216CC0309FA9F68B2 /* Color+Theme.swift in Sources */,
+				30E40E5295C8D568CE1A5F0E /* ErrorStateCard.swift in Sources */,
 				BE160C2F244D5C4B625DF58F /* LoginView.swift in Sources */,
 				6F8887BF23F5E030CE315BDB /* MyPageView.swift in Sources */,
 				A8E6AC74B0D9FCB6F055BF20 /* ReviewComposerView.swift in Sources */,
@@ -269,6 +284,7 @@
 				51FEAD85FB1437DDEE6BB509 /* SessionStore.swift in Sources */,
 				020C582A3C493CC58F872A11 /* SignUpView.swift in Sources */,
 				7C3E759901E567CC112D2C88 /* SupabaseClientProvider.swift in Sources */,
+				D21A39BBD304C5F31942AFC6 /* ToastBannerView.swift in Sources */,
 				3D06666350774F5A63200A5C /* UserProfileService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

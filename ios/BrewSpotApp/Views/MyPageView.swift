@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MyPageView: View {
+    @Environment(\.openURL) private var openURL
     @EnvironmentObject private var sessionStore: SessionStore
     @EnvironmentObject private var bookmarkStore: BookmarkStore
     @EnvironmentObject private var reviewStore: ReviewStore
@@ -11,11 +12,14 @@ struct MyPageView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     profileCard
+                    errorSection
                     activitySummary
                     recentActivitySection
                     myReviewSection
                     savedCafeSection
                     preferenceSection
+                    supportSection
+                    legalSection
                     accountSection
                 }
                 .padding(24)
@@ -70,52 +74,111 @@ struct MyPageView: View {
         return Array(mergedActivities.prefix(5))
     }
 
-    private var profileCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(Color.brewLatte)
-                        .frame(width: 58, height: 58)
-
-                    Image(systemName: "person.fill")
-                        .foregroundStyle(Color.brewBrown)
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(sessionStore.currentUser?.nickname ?? "게스트")
-                        .font(.title3.bold())
-
-                    Text(sessionStore.currentUser?.email ?? "이메일 정보 없음")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+    private var errorSection: some View {
+        VStack(spacing: 12) {
+            if let errorMessage = cafeListViewModel.errorMessage {
+                ErrorStateCard(
+                    title: "카페 정보를 불러오지 못했어요",
+                    message: errorMessage,
+                    buttonTitle: "다시 불러오기"
+                ) {
+                    Task {
+                        await cafeListViewModel.refresh()
+                        await reviewStore.refreshMyReviews(using: cafeListViewModel.cafes)
+                    }
                 }
             }
 
-            Text("좋아하는 공간을 저장하고, 취향에 맞는 카페를 계속 쌓아가는 BrewSpot 프로필")
+            if let errorMessage = bookmarkStore.errorMessage {
+                ErrorStateCard(
+                    title: "저장 컬렉션을 불러오지 못했어요",
+                    message: errorMessage,
+                    buttonTitle: "다시 불러오기"
+                ) {
+                    Task { await bookmarkStore.refresh() }
+                }
+            }
+
+            if let errorMessage = reviewStore.errorMessage {
+                ErrorStateCard(
+                    title: "리뷰 기록을 불러오지 못했어요",
+                    message: errorMessage,
+                    buttonTitle: "다시 불러오기"
+                ) {
+                    Task { await reviewStore.refreshMyReviews(using: cafeListViewModel.cafes) }
+                }
+            }
+        }
+    }
+
+    private var profileCard: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("BREW PASSPORT")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Color.white.opacity(0.74))
+
+                    Text(sessionStore.currentUser?.nickname ?? "게스트")
+                        .font(.title2.bold())
+                        .foregroundStyle(.white)
+
+                    Text(sessionStore.currentUser?.email ?? "이메일 정보 없음")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.white.opacity(0.82))
+                }
+
+                Spacer()
+
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 64, height: 64)
+
+                    Image(systemName: "person.crop.circle.fill")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.white)
+                }
+            }
+
+            Text("좋아하는 공간을 저장하고 리뷰를 남기며, 나만의 카페 취향을 차분하게 쌓아가는 브루 기록이에요.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.white.opacity(0.84))
+
+            HStack(spacing: 12) {
+                profileMetricCard(title: "저장한 카페", value: "\(bookmarkedCafes.count)", caption: "컬렉션")
+                profileMetricCard(title: "작성한 리뷰", value: "\(myReviewItems.count)", caption: "기록")
+            }
+
+            HStack(spacing: 8) {
+                infoPill(title: favoriteTags.isEmpty ? "취향 태그 준비 중" : "\(favoriteTags.count)개 취향 태그", systemImage: "tag.fill")
+                infoPill(title: exploredCategories.isEmpty ? "첫 셀렉션 전" : exploredCategories.prefix(2).joined(separator: " • "), systemImage: "sparkles")
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
+        .padding(22)
         .background(
             LinearGradient(
-                colors: [Color.brewLatte, Color.brewCream],
+                colors: [Color.brewMocha, Color.brewBrown],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         )
-        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .overlay(
+            RoundedRectangle(cornerRadius: 26)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 26))
     }
 
     private var activitySummary: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("활동 요약")
+            Text("브루 요약")
                 .font(.headline)
 
             HStack(spacing: 12) {
-                summaryCard(title: "저장한 카페", value: "\(bookmarkedCafes.count)", caption: "관심 공간", systemImage: "bookmark.fill")
-                summaryCard(title: "작성한 리뷰", value: "\(myReviewItems.count)", caption: "남긴 기록", systemImage: "square.and.pencil")
+                summaryCard(title: "저장한 카페", value: "\(bookmarkedCafes.count)", caption: "컬렉션", systemImage: "bookmark.fill")
+                summaryCard(title: "작성한 리뷰", value: "\(myReviewItems.count)", caption: "리뷰 노트", systemImage: "square.and.pencil")
             }
         }
     }
@@ -123,7 +186,7 @@ struct MyPageView: View {
     private var recentActivitySection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("최근 활동")
+                Text("최근 기록")
                     .font(.headline)
 
                 Spacer()
@@ -136,8 +199,9 @@ struct MyPageView: View {
             if recentActivityItems.isEmpty {
                 emptyStateCard(
                     title: "활동 기록이 아직 없어요",
-                    message: "카페를 저장하거나 리뷰를 남기면 최근 활동이 시간순으로 여기에 쌓여요.",
-                    systemImage: "clock.arrow.circlepath"
+                    message: "카페를 저장하거나 리뷰를 남기면 최근 기록이 여기에 차분히 쌓여요.",
+                    systemImage: "clock.arrow.circlepath",
+                    hint: "첫 저장이나 첫 리뷰가 생기면 이 공간도 바로 채워져요."
                 )
             } else {
                 ForEach(recentActivityItems) { item in
@@ -150,7 +214,7 @@ struct MyPageView: View {
     private var myReviewSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("내가 쓴 리뷰")
+                Text("내가 남긴 노트")
                     .font(.headline)
 
                 Spacer()
@@ -162,9 +226,10 @@ struct MyPageView: View {
 
             if myReviewItems.isEmpty {
                 emptyStateCard(
-                    title: "아직 작성한 리뷰가 없어요",
-                    message: "카페 상세에서 리뷰를 남기면 내 기록으로 여기에 쌓여요.",
-                    systemImage: "square.and.pencil"
+                    title: "아직 남긴 노트가 없어요",
+                    message: "카페 상세에서 리뷰를 남기면 내 기록으로 여기에 차곡차곡 쌓여요.",
+                    systemImage: "square.and.pencil",
+                    hint: "마음에 남은 공간부터 한 줄씩 남겨보세요."
                 )
             } else {
                 ForEach(myReviewItems) { item in
@@ -186,7 +251,7 @@ struct MyPageView: View {
     private var savedCafeSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("저장한 카페")
+                Text("저장 컬렉션")
                     .font(.headline)
 
                 Spacer()
@@ -199,8 +264,9 @@ struct MyPageView: View {
             if bookmarkedCafes.isEmpty {
                 emptyStateCard(
                     title: "저장한 카페가 아직 없어요",
-                    message: "탐색 화면에서 마음에 드는 카페를 저장하면 여기에 모아볼 수 있어요.",
-                    systemImage: "bookmark"
+                    message: "탐색 화면에서 마음에 드는 카페를 저장하면 이 컬렉션에 모아볼 수 있어요.",
+                    systemImage: "bookmark",
+                    hint: "지금 마음에 드는 공간을 저장해 두면 다시 찾기 쉬워져요."
                 )
             } else {
                 ForEach(bookmarkedCafes) { cafe in
@@ -224,7 +290,8 @@ struct MyPageView: View {
                 emptyStateCard(
                     title: "취향 태그가 아직 없어요",
                     message: "카페를 저장하면 분위기 태그를 바탕으로 취향 키워드가 여기에 정리돼요.",
-                    systemImage: "tag"
+                    systemImage: "tag",
+                    hint: "저장한 공간이 쌓일수록 취향도 더 또렷해져요."
                 )
             } else {
                 FlowTagView(tags: favoriteTags)
@@ -232,12 +299,78 @@ struct MyPageView: View {
         }
     }
 
-    private var accountSection: some View {
+    private var supportSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("계정")
+            Text("도움말")
                 .font(.headline)
 
-            Button("로그아웃") {
+            actionRow(
+                title: "문의 메일",
+                subtitle: AppConfig.supportEmail,
+                systemImage: "envelope"
+            ) {
+                open(AppConfig.supportMailURL())
+            }
+
+            actionRow(
+                title: "지원 페이지",
+                subtitle: "도움말과 문의 경로를 웹에서 확인해요.",
+                systemImage: "questionmark.bubble"
+            ) {
+                open(AppConfig.supportPageURL)
+            }
+        }
+    }
+
+    private var legalSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("정책 안내")
+                .font(.headline)
+
+            actionRow(
+                title: "개인정보처리방침",
+                subtitle: "수집 항목과 이용 목적을 확인해요.",
+                systemImage: "hand.raised"
+            ) {
+                open(AppConfig.privacyPolicyURL)
+            }
+
+            actionRow(
+                title: "이용약관",
+                subtitle: "서비스 이용 기준과 책임 범위를 확인해요.",
+                systemImage: "doc.text"
+            ) {
+                open(AppConfig.termsURL)
+            }
+        }
+    }
+
+    private var accountSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("계정 관리")
+                .font(.headline)
+
+            infoRow(
+                title: "계정 삭제 요청",
+                subtitle: "삭제가 필요하면 문의 메일로 요청해 주세요.",
+                detail: "메일 열기",
+                systemImage: "person.crop.circle.badge.exclamationmark"
+            ) {
+                open(
+                    AppConfig.supportMailURL(
+                        subject: "BrewSpot 계정 삭제 요청",
+                        body: "삭제를 원하는 계정 이메일:\n요청 사유:\n"
+                    )
+                )
+            }
+
+            staticInfoRow(
+                title: "앱 버전",
+                subtitle: appVersionText,
+                systemImage: "info.circle"
+            )
+
+            Button("로그아웃하기") {
                 Task { await sessionStore.signOut() }
             }
             .buttonStyle(.bordered)
@@ -258,6 +391,12 @@ struct MyPageView: View {
         cafes.first { $0.id == id }
     }
 
+    private var appVersionText: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
+        return "\(version) (\(build))"
+    }
+
     private func summaryCard(title: String, value: String, caption: String, systemImage: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Label(title, systemImage: systemImage)
@@ -273,7 +412,11 @@ struct MyPageView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(Color(.secondarySystemBackground))
+        .background(Color.white.opacity(0.82))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
@@ -311,8 +454,136 @@ struct MyPageView: View {
             .foregroundStyle(.secondary)
         }
         .padding(18)
-        .background(Color(.secondarySystemBackground))
+        .background(Color.white.opacity(0.82))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 18))
+    }
+
+    private func actionRow(
+        title: String,
+        subtitle: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(alignment: .center, spacing: 14) {
+                Image(systemName: systemImage)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color.brewBrown)
+                    .frame(width: 34, height: 34)
+                    .background(Color.brewLatte)
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(18)
+            .background(Color.white.opacity(0.82))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func infoRow(
+        title: String,
+        subtitle: String,
+        detail: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(alignment: .center, spacing: 14) {
+                Image(systemName: systemImage)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color.brewBrown)
+                    .frame(width: 34, height: 34)
+                    .background(Color.brewLatte)
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                }
+
+                Spacer()
+
+                Text(detail)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Color.brewBrown)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(18)
+            .background(Color.white.opacity(0.82))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func staticInfoRow(title: String, subtitle: String, systemImage: String) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: systemImage)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Color.brewBrown)
+                .frame(width: 34, height: 34)
+                .background(Color.brewLatte)
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(Color.white.opacity(0.82))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+    }
+
+    private func open(_ url: URL?) {
+        guard let url else { return }
+        openURL(url)
     }
 
     private func myReviewRow(_ item: ReviewStore.SavedReviewItem) -> some View {
@@ -349,7 +620,11 @@ struct MyPageView: View {
             .foregroundStyle(.secondary)
         }
         .padding(18)
-        .background(Color(.secondarySystemBackground))
+        .background(Color.white.opacity(0.82))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
@@ -382,27 +657,89 @@ struct MyPageView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(18)
-        .background(Color(.secondarySystemBackground))
+        .background(Color.white.opacity(0.82))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
-    private func emptyStateCard(title: String, message: String, systemImage: String) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: systemImage)
-                .font(.title3)
-                .foregroundStyle(Color.brewBrown)
-
+    private func profileMetricCard(title: String, value: String, caption: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.headline)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Color.white.opacity(0.7))
 
-            Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.title3.bold())
+                .foregroundStyle(.white)
+
+            Text(caption)
+                .font(.footnote)
+                .foregroundStyle(Color.white.opacity(0.78))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(18)
-        .background(Color(.secondarySystemBackground))
+        .padding(14)
+        .background(Color.white.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: 18))
+    }
+
+    private func infoPill(title: String, systemImage: String) -> some View {
+        Label(title, systemImage: systemImage)
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color.white.opacity(0.14))
+            .clipShape(Capsule())
+    }
+
+    private func emptyStateCard(title: String, message: String, systemImage: String, hint: String) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.72))
+                        .frame(width: 46, height: 46)
+
+                    Image(systemName: systemImage)
+                        .font(.title3)
+                        .foregroundStyle(Color.brewBrown)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title)
+                        .font(.headline)
+
+                    Text(message)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Text(hint)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Color.brewBrown)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.7))
+                .clipShape(Capsule())
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(
+            LinearGradient(
+                colors: [Color.brewLatte.opacity(0.85), Color.white.opacity(0.92)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 22))
     }
 }
 

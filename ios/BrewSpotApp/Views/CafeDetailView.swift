@@ -4,6 +4,7 @@ struct CafeDetailView: View {
     @EnvironmentObject private var bookmarkStore: BookmarkStore
     @EnvironmentObject private var reviewStore: ReviewStore
     @EnvironmentObject private var sessionStore: SessionStore
+    @EnvironmentObject private var toastCenter: AppToastCenter
     let cafe: Cafe
     @State private var isPresentingReviewComposer = false
     @State private var isTogglingBookmark = false
@@ -17,7 +18,8 @@ struct CafeDetailView: View {
                 featureSection
                 locationSection
                 reviewsSection
-                reviewCallToAction
+                Color.clear
+                    .frame(height: 8)
             }
             .padding(24)
         }
@@ -30,9 +32,7 @@ struct CafeDetailView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     Task {
-                        isTogglingBookmark = true
-                        await bookmarkStore.toggle(cafe)
-                        isTogglingBookmark = false
+                        await toggleBookmarkWithFeedback()
                     }
                 } label: {
                     if isTogglingBookmark {
@@ -46,6 +46,9 @@ struct CafeDetailView: View {
             }
         }
         .background(Color.brewCream.ignoresSafeArea())
+        .safeAreaInset(edge: .bottom) {
+            actionBar
+        }
         .sheet(isPresented: $isPresentingReviewComposer) {
             ReviewComposerView(cafeName: cafe.name, initialNickname: sessionStore.currentUser?.nickname ?? "") { submission in
                 try await reviewStore.addReview(
@@ -54,6 +57,11 @@ struct CafeDetailView: View {
                     rating: submission.rating,
                     visitNote: submission.visitNote,
                     recommendedMenu: submission.recommendedMenu
+                )
+                toastCenter.showSuccess(
+                    title: "리뷰를 남겼어요",
+                    message: "\(cafe.name)에 오늘의 노트를 저장했어요.",
+                    systemImage: "checkmark.bubble.fill"
                 )
             }
             .presentationDetents([.medium, .large])
@@ -65,51 +73,75 @@ struct CafeDetailView: View {
     }
 
     private var heroSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(cafe.category.uppercased())
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Color.brewBrown)
-
-            Text(cafe.name)
-                .font(.largeTitle.bold())
-
-            Text(cafe.shortDescription)
-                .font(.body)
-                .foregroundStyle(.secondary)
-
-            HStack(spacing: 10) {
-                Label(String(format: "%.1f", cafe.rating), systemImage: "star.fill")
-                Label("\(cafe.reviewCount)개의 리뷰", systemImage: "text.bubble.fill")
-                Label(cafe.priceNote, systemImage: "creditcard.fill")
-            }
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(.secondary)
-
-            ScrollView(.horizontal, showsIndicators: false) {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack {
                 HStack(spacing: 8) {
-                    ForEach(cafe.vibeTags, id: \.self) { tag in
-                        Text("#\(tag)")
-                            .font(.footnote.weight(.medium))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(Color.brewLatte)
-                            .clipShape(Capsule())
+                    detailBadge(cafe.city, tint: Color.brewMocha, fill: Color.white.opacity(0.88))
+                    detailBadge(cafe.category.uppercased(), tint: .white, fill: Color.white.opacity(0.14))
+                }
+
+                Spacer()
+
+                detailBadge(cafe.priceNote, tint: .white, fill: Color.white.opacity(0.14))
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(cafe.name)
+                    .font(.largeTitle.bold())
+                    .foregroundStyle(.white)
+
+                Text(cafe.shortDescription)
+                    .font(.body)
+                    .foregroundStyle(Color.white.opacity(0.84))
+            }
+
+            CafeArtworkView(cafe: cafe, variant: .hero)
+
+            HStack(spacing: 12) {
+                heroInfoCard(title: "평점", value: String(format: "%.1f", cafe.rating), systemImage: "star.fill")
+                heroInfoCard(title: "리뷰", value: "\(cafe.reviewCount)개", systemImage: "text.bubble.fill")
+                heroInfoCard(title: "대표 메뉴", value: cafe.signatureMenu, systemImage: "cup.and.saucer.fill")
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("BREW NOTES")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Color.white.opacity(0.76))
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(cafe.vibeTags, id: \.self) { tag in
+                            detailBadge("#\(tag)", tint: .white, fill: Color.white.opacity(0.12))
+                        }
                     }
                 }
             }
         }
+        .padding(22)
+        .background(
+            LinearGradient(
+                colors: [Color.brewMocha, Color.brewBrown],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 28)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 28))
     }
 
     private var statsSection: some View {
         HStack(spacing: 12) {
-            infoCard(title: "대표 메뉴", value: cafe.signatureMenu, systemImage: "cup.and.saucer.fill")
+            infoCard(title: "시그니처 메뉴", value: cafe.signatureMenu, systemImage: "cup.and.saucer.fill")
             infoCard(title: "운영 시간", value: cafe.openHours, systemImage: "clock.fill")
         }
     }
 
     private var summarySection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("이런 분께 잘 맞아요")
+            Text("이런 순간에 잘 어울려요")
                 .font(.headline)
 
             ForEach(cafe.features, id: \.self) { feature in
@@ -120,24 +152,36 @@ struct CafeDetailView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(Color(.secondarySystemBackground))
+        .background(Color.white.opacity(0.82))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
     private var featureSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("카페 소개")
+            Text("공간 노트")
                 .font(.headline)
 
-            Text("\(cafe.name)은(는) \(cafe.city)에서 \(cafe.category) 무드를 즐기기 좋은 공간이에요. 대표 메뉴인 \(cafe.signatureMenu)를 중심으로, 방문 목적이 분명한 사용자에게 잘 맞는 구성이 보입니다.")
+            Text("\(cafe.name)은(는) \(cafe.city)에서 \(cafe.category) 무드를 즐기기 좋은 공간이에요. \(cafe.signatureMenu)를 중심으로, 짧게 머물러도 분위기가 또렷하게 남는 카페예요.")
                 .font(.body)
                 .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(Color.white.opacity(0.82))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
     private var locationSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("위치 정보")
+            Text("찾아가기")
                 .font(.headline)
 
             Label(cafe.address, systemImage: "mappin.and.ellipse")
@@ -146,21 +190,23 @@ struct CafeDetailView: View {
         .font(.subheadline)
         .foregroundStyle(.secondary)
         .padding(18)
-        .background(Color(.secondarySystemBackground))
+        .background(Color.white.opacity(0.82))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
-    private var reviewCallToAction: some View {
+    private var actionBar: some View {
         HStack(spacing: 12) {
             Button {
                 Task {
-                    isTogglingBookmark = true
-                    await bookmarkStore.toggle(cafe)
-                    isTogglingBookmark = false
+                    await toggleBookmarkWithFeedback()
                 }
             } label: {
                 Label(
-                    bookmarkStore.isBookmarked(cafe) ? "저장됨" : "저장하기",
+                    bookmarkStore.isBookmarked(cafe) ? "저장됨" : "컬렉션 저장",
                     systemImage: bookmarkStore.isBookmarked(cafe) ? "bookmark.fill" : "bookmark"
                 )
                 .frame(maxWidth: .infinity)
@@ -171,11 +217,37 @@ struct CafeDetailView: View {
             Button {
                 isPresentingReviewComposer = true
             } label: {
-                Text("리뷰 쓰기")
+                Text("리뷰 남기기")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .tint(Color.brewBrown)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 14)
+        .padding(.bottom, 18)
+        .background(.ultraThinMaterial)
+    }
+
+    private func toggleBookmarkWithFeedback() async {
+        isTogglingBookmark = true
+        defer { isTogglingBookmark = false }
+
+        guard let result = await bookmarkStore.toggle(cafe) else { return }
+
+        switch result {
+        case .added:
+            toastCenter.showSuccess(
+                title: "컬렉션에 담았어요",
+                message: "\(cafe.name)을 저장해뒀어요.",
+                systemImage: "bookmark.fill"
+            )
+        case .removed:
+            toastCenter.showSuccess(
+                title: "컬렉션에서 뺐어요",
+                message: "\(cafe.name)을 저장 목록에서 뺐어요.",
+                systemImage: "bookmark.slash.fill"
+            )
         }
     }
 
@@ -191,14 +263,18 @@ struct CafeDetailView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Color(.secondarySystemBackground))
+        .background(Color.white.opacity(0.82))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 
     private var reviewsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("방문자 리뷰")
+                Text("방문 노트")
                     .font(.headline)
 
                 Spacer()
@@ -208,50 +284,189 @@ struct CafeDetailView: View {
                     .foregroundStyle(.secondary)
             }
 
+            reviewInsightCard
+
             if reviewStore.isLoadingReviews(for: cafe) && reviews.isEmpty {
                 ProgressView("리뷰를 불러오는 중...")
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else if reviews.isEmpty {
-                Text("아직 등록된 리뷰가 없어요. 첫 리뷰를 남겨보세요.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(16)
-                    .background(Color(.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                emptyReviewState
             } else {
                 ForEach(reviews) { review in
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 14) {
                         HStack {
-                            Text(review.authorName)
-                                .font(.subheadline.weight(.semibold))
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(review.authorName)
+                                    .font(.headline)
+
+                                Text(review.relativeCreatedAt)
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                            }
 
                             Spacer()
 
-                            Label("\(review.rating)점", systemImage: "star.fill")
-                                .font(.footnote.weight(.semibold))
-                                .foregroundStyle(Color.brewBrown)
+                            reviewScoreBadge(review.rating)
                         }
 
                         Text(review.visitNote)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+
+                        HStack(spacing: 8) {
+                            ForEach(1...5, id: \.self) { index in
+                                Image(systemName: index <= review.rating ? "star.fill" : "star")
+                                    .font(.caption)
+                                    .foregroundStyle(index <= review.rating ? Color.brewBrown : Color.brewLatte)
+                            }
+                        }
 
                         HStack {
                             Label(review.recommendedMenu, systemImage: "cup.and.saucer.fill")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(Color.brewBrown)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Color.brewLatte.opacity(0.55))
+                                .clipShape(Capsule())
                             Spacer()
-                            Text(review.relativeCreatedAt)
+
+                            Text("방문 노트")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
                         }
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(16)
-                    .background(Color(.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .padding(18)
+                    .background(Color.white.opacity(0.84))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 22)
+                            .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 22))
                 }
             }
         }
+    }
+
+    private var reviewInsightCard: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("REVIEW TONE")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Text(reviews.isEmpty ? "첫 방문 노트를 기다리고 있어요." : "남겨진 한 줄을 보고 이 공간의 톤을 가늠해보세요.")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 6) {
+                Text(String(format: "%.1f", cafe.rating))
+                    .font(.title3.bold())
+                    .foregroundStyle(Color.brewBrown)
+
+                Text("평균 평점")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(18)
+        .background(Color.white.opacity(0.82))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+    }
+
+    private var emptyReviewState: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.brewLatte.opacity(0.55))
+                        .frame(width: 46, height: 46)
+
+                    Image(systemName: "text.bubble")
+                        .foregroundStyle(Color.brewBrown)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("아직 남겨진 노트가 없어요")
+                        .font(.headline)
+
+                    Text("첫 방문 노트를 남기고 이 카페의 분위기를 가장 먼저 기록해보세요.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Text("첫 노트가 다음 방문자의 선택을 도와줘요.")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Color.brewBrown)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.72))
+                .clipShape(Capsule())
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(
+            LinearGradient(
+                colors: [Color.brewLatte.opacity(0.88), Color.white.opacity(0.92)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 22))
+    }
+
+    private func reviewScoreBadge(_ rating: Int) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "star.fill")
+            Text("\(rating)점")
+        }
+        .font(.footnote.weight(.bold))
+        .foregroundStyle(Color.brewBrown)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color.brewLatte.opacity(0.55))
+        .clipShape(Capsule())
+    }
+
+    private func detailBadge(_ text: String, tint: Color, fill: Color) -> some View {
+        Text(text)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(tint)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(fill)
+            .clipShape(Capsule())
+    }
+
+    private func heroInfoCard(title: String, value: String, systemImage: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(title, systemImage: systemImage)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Color.white.opacity(0.76))
+
+            Text(value)
+                .font(.subheadline.bold())
+                .foregroundStyle(.white)
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(Color.white.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 }
 

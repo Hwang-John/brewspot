@@ -2,18 +2,25 @@ import SwiftUI
 
 struct AppTabView: View {
     var body: some View {
-        TabView {
-            CafeHomeView()
-                .tabItem {
-                    Label("탐색", systemImage: "map")
-                }
+        ZStack {
+            Color.brewCream.ignoresSafeArea()
 
-            MyPageView()
-                .tabItem {
-                    Label("마이", systemImage: "person.crop.circle")
-                }
+            TabView {
+                CafeHomeView()
+                    .tabItem {
+                        Label("탐색", systemImage: "map")
+                    }
+
+                MyPageView()
+                    .tabItem {
+                        Label("마이", systemImage: "person.crop.circle")
+                    }
+            }
         }
         .tint(Color.brewBrown)
+        .toolbarBackground(Color.brewFoam, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
+        .toolbarColorScheme(.light, for: .tabBar)
     }
 }
 

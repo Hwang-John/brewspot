@@ -4,45 +4,75 @@ struct CafeHomeView: View {
     @EnvironmentObject private var sessionStore: SessionStore
     @EnvironmentObject private var bookmarkStore: BookmarkStore
     @EnvironmentObject private var cafeListViewModel: CafeListViewModel
+    @EnvironmentObject private var toastCenter: AppToastCenter
     @State private var searchText = ""
     @State private var selectedCategory = "전체"
+    @State private var selectedMapCafe: Cafe?
+    private let mapSectionID = "cafe-map-section"
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    if let user = sessionStore.currentUser {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("안녕하세요, \(user.nickname)")
-                                .font(.title2.bold())
-                            Text(user.email ?? "")
-                                .foregroundStyle(.secondary)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 20) {
+                        if let user = sessionStore.currentUser {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("안녕하세요, \(user.nickname)")
+                                    .font(.title2.bold())
+                                Text(user.email ?? "")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
+
+                        heroBanner
+
+                        if let errorMessage = cafeListViewModel.errorMessage {
+                            ErrorStateCard(
+                                title: "카페 리스트를 불러오지 못했어요",
+                                message: errorMessage,
+                                buttonTitle: "다시 불러오기"
+                            ) {
+                                Task { await cafeListViewModel.refresh() }
+                            }
+                        }
+
+                        if let errorMessage = bookmarkStore.errorMessage {
+                            ErrorStateCard(
+                                title: "저장 컬렉션을 불러오지 못했어요",
+                                message: errorMessage,
+                                buttonTitle: "다시 불러오기"
+                            ) {
+                                Task { await bookmarkStore.refresh() }
+                            }
+                        }
+
+                        if cafeListViewModel.isLoading {
+                            ProgressView("카페를 준비하고 있어요...")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        discoveryControls
+
+                        CafeMapView(cafes: mapDisplayCafes, selectedCafe: $selectedMapCafe)
+                            .id(mapSectionID)
+
+                        bookmarkedSection { cafe in
+                            focusMap(on: cafe, using: proxy)
+                        }
+
+                        recommendedSection { cafe in
+                            focusMap(on: cafe, using: proxy)
+                        }
+
+                        Button("로그아웃") {
+                            Task { await sessionStore.signOut() }
+                        }
+                        .buttonStyle(.bordered)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
-
-                    heroBanner
-
-                    if cafeListViewModel.isLoading {
-                        ProgressView("카페 정보를 불러오는 중...")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-
-                    discoveryControls
-
-                    CafeMapView(cafes: filteredCafes.isEmpty ? cafes : filteredCafes)
-
-                    bookmarkedSection
-
-                    recommendedSection
-
-                    Button("로그아웃") {
-                        Task { await sessionStore.signOut() }
-                    }
-                    .buttonStyle(.bordered)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(24)
                 }
-                .padding(24)
             }
             .navigationTitle("BrewSpot")
             .background(Color.brewCream.ignoresSafeArea())
@@ -83,38 +113,107 @@ struct CafeHomeView: View {
         cafes.filter { bookmarkStore.isBookmarked($0) }
     }
 
+    private var mapDisplayCafes: [Cafe] {
+        filteredCafes.isEmpty ? cafes : filteredCafes
+    }
+
+    private var discoverySummary: String {
+        let trimmedSearch = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if !trimmedSearch.isEmpty {
+            return "`\(trimmedSearch)`에 맞는 카페를 골라봤어요."
+        }
+
+        if selectedCategory != "전체" {
+            return "\(selectedCategory) 무드의 카페를 모았어요."
+        }
+
+        return "지금 둘러보기 좋은 카페를 모았어요."
+    }
+
     private var heroBanner: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("오늘의 카페 탐색")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 18) {
+            HStack {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("BrewSpot")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.white.opacity(0.86))
 
-            Text("지도에서 가까운 카페를 확인하고, 아래 추천 리스트에서 취향에 맞는 공간을 바로 골라보세요.")
+                    Text("오늘의 브루 가이드")
+                        .font(.title2.bold())
+                        .foregroundStyle(.white)
+                }
+
+                Spacer()
+
+                Text("DAILY PICK")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Color.brewMocha)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(Color.white.opacity(0.9))
+                    .clipShape(Capsule())
+            }
+
+            Text("지도와 리스트를 오가며 오늘 머물고 싶은 카페를 차분하게 골라보세요.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.white.opacity(0.86))
 
-            Text("현재 데이터: \(cafeListViewModel.sourceDescription)")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(Color.brewBrown)
+            HStack(spacing: 12) {
+                heroMetricCard(title: "추천 카페", value: "\(filteredCafes.count)곳", caption: selectedCategory == "전체" ? "오늘의 셀렉션" : selectedCategory)
+                heroMetricCard(title: "저장한 카페", value: "\(bookmarkedCafes.count)곳", caption: "내 컬렉션")
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("현재 셀렉션")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.white.opacity(0.72))
+
+                Text(cafeListViewModel.sourceDescription)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.white)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 18))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(18)
+        .padding(22)
         .background(
             LinearGradient(
-                colors: [Color.brewLatte, Color.brewCream],
+                colors: [Color.brewMocha, Color.brewBrown],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         )
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24))
     }
 
     private var discoveryControls: some View {
         VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("탐색 필터")
+                        .font(.headline)
+
+                    Text("지역, 무드, 메뉴 기준으로 빠르게 좁혀보세요.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+            }
+
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.brewBrown)
 
-                TextField("카페명, 지역, 메뉴로 검색", text: $searchText)
+                TextField("카페명, 지역, 메뉴 검색", text: $searchText)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
 
@@ -128,7 +227,7 @@ struct CafeHomeView: View {
                 }
             }
             .padding(14)
-            .background(Color(.secondarySystemBackground))
+            .background(Color.brewFoam)
             .clipShape(RoundedRectangle(cornerRadius: 16))
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -150,9 +249,16 @@ struct CafeHomeView: View {
                 }
             }
         }
+        .padding(18)
+        .background(Color.white.opacity(0.76))
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 22))
     }
 
-    private var recommendedSection: some View {
+    private func recommendedSection(focusOnMap: @escaping (Cafe) -> Void) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text("추천 카페")
@@ -165,26 +271,26 @@ struct CafeHomeView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Text(discoverySummary)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
             if filteredCafes.isEmpty {
                 emptyStateCard(
-                    title: "조건에 맞는 카페가 없어요",
-                    message: "검색어를 짧게 바꾸거나 다른 카테고리를 선택하면 더 많은 결과를 볼 수 있어요.",
-                    systemImage: "magnifyingglass"
+                    title: "아직 맞는 카페가 없어요",
+                    message: "검색어나 카테고리를 바꾸면 다른 셀렉션을 볼 수 있어요.",
+                    systemImage: "magnifyingglass",
+                    hint: "검색어를 가볍게 바꾸면 새로운 추천이 보여요."
                 )
             } else {
                 ForEach(filteredCafes) { cafe in
-                    NavigationLink {
-                        CafeDetailView(cafe: cafe)
-                    } label: {
-                        cafeRow(cafe)
-                    }
-                    .buttonStyle(.plain)
+                    cafeRow(cafe, focusOnMap: focusOnMap)
                 }
             }
         }
     }
 
-    private var bookmarkedSection: some View {
+    private func bookmarkedSection(focusOnMap: @escaping (Cafe) -> Void) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text("저장한 카페")
@@ -199,20 +305,16 @@ struct CafeHomeView: View {
 
             if bookmarkedCafes.isEmpty {
                 emptyStateCard(
-                    title: "아직 저장한 카페가 없어요",
-                    message: "추천 카드나 카페 상세에서 저장 버튼을 누르면 관심 카페가 여기에 모여요.",
-                    systemImage: "bookmark"
+                    title: "저장한 카페가 아직 없어요",
+                    message: "마음에 드는 카페를 저장하면 이 컬렉션에 차곡차곡 쌓여요.",
+                    systemImage: "bookmark",
+                    hint: "탐색 중 저장한 공간은 언제든 다시 꺼내볼 수 있어요."
                 )
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 14) {
                         ForEach(bookmarkedCafes) { cafe in
-                            NavigationLink {
-                                CafeDetailView(cafe: cafe)
-                            } label: {
-                                bookmarkedCafeCard(cafe)
-                            }
-                            .buttonStyle(.plain)
+                            bookmarkedCafeCard(cafe, focusOnMap: focusOnMap)
                         }
                     }
                     .padding(.vertical, 2)
@@ -221,8 +323,19 @@ struct CafeHomeView: View {
         }
     }
 
-    private func cafeRow(_ cafe: Cafe) -> some View {
+    private func cafeRow(_ cafe: Cafe, focusOnMap: @escaping (Cafe) -> Void) -> some View {
         VStack(alignment: .leading, spacing: 12) {
+            CafeArtworkView(cafe: cafe, variant: .wide)
+
+            HStack(spacing: 8) {
+                tagPill(cafe.city, tint: Color.brewBrown, background: Color.brewLatte)
+                tagPill(cafe.category, tint: .primary, background: Color.white.opacity(0.72))
+                Spacer()
+                Text("리뷰 \(cafe.reviewCount)개")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(cafe.name)
@@ -250,6 +363,14 @@ struct CafeHomeView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.leading)
 
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(Array(cafe.vibeTags.prefix(3)), id: \.self) { tag in
+                        tagPill("#\(tag)", tint: Color.brewBrown, background: Color.white.opacity(0.75))
+                    }
+                }
+            }
+
             HStack {
                 Label(cafe.signatureMenu, systemImage: "cup.and.saucer.fill")
                 Spacer()
@@ -257,14 +378,46 @@ struct CafeHomeView: View {
             }
             .font(.footnote)
             .foregroundStyle(.secondary)
+
+            HStack(spacing: 10) {
+                Button {
+                    focusOnMap(cafe)
+                } label: {
+                    Label("지도에서 보기", systemImage: "map")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(Color.brewBrown)
+
+                NavigationLink {
+                    CafeDetailView(cafe: cafe)
+                } label: {
+                    Text("상세 보기")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.brewBrown)
+            }
         }
         .padding(18)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .background(
+            LinearGradient(
+                colors: [Color.white.opacity(0.95), Color.brewLatte.opacity(0.55)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 22))
     }
 
-    private func bookmarkedCafeCard(_ cafe: Cafe) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+    private func bookmarkedCafeCard(_ cafe: Cafe, focusOnMap: @escaping (Cafe) -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            CafeArtworkView(cafe: cafe, variant: .compact)
+
             HStack {
                 Text(cafe.name)
                     .font(.headline)
@@ -283,17 +436,70 @@ struct CafeHomeView: View {
             Text(cafe.signatureMenu)
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(Color.brewBrown)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(Array(cafe.vibeTags.prefix(2)), id: \.self) { tag in
+                        tagPill("#\(tag)", tint: Color.brewBrown, background: Color.white.opacity(0.72))
+                    }
+                }
+            }
+
+            VStack(spacing: 8) {
+                Button {
+                    focusOnMap(cafe)
+                } label: {
+                    Label("지도에서 보기", systemImage: "map")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(Color.brewBrown)
+
+                NavigationLink {
+                    CafeDetailView(cafe: cafe)
+                } label: {
+                    Text("상세 보기")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.brewBrown)
+            }
         }
         .frame(width: 180, alignment: .leading)
         .padding(16)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .background(
+            LinearGradient(
+                colors: [Color.white.opacity(0.94), Color.brewLatte.opacity(0.52)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 22))
     }
 
     private func bookmarkButton(for cafe: Cafe) -> some View {
         Button {
             Task {
-                await bookmarkStore.toggle(cafe)
+                guard let result = await bookmarkStore.toggle(cafe) else { return }
+
+                switch result {
+                case .added:
+                    toastCenter.showSuccess(
+                        title: "컬렉션에 담았어요",
+                        message: "\(cafe.name)을 저장해뒀어요.",
+                        systemImage: "bookmark.fill"
+                    )
+                case .removed:
+                    toastCenter.showSuccess(
+                        title: "컬렉션에서 뺐어요",
+                        message: "\(cafe.name)을 저장 목록에서 뺐어요.",
+                        systemImage: "bookmark.slash.fill"
+                    )
+                }
             }
         } label: {
             Image(systemName: bookmarkStore.isBookmarked(cafe) ? "bookmark.fill" : "bookmark")
@@ -302,22 +508,87 @@ struct CafeHomeView: View {
         .buttonStyle(.plain)
     }
 
-    private func emptyStateCard(title: String, message: String, systemImage: String) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: systemImage)
-                .font(.title3)
+    private func emptyStateCard(title: String, message: String, systemImage: String, hint: String) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.72))
+                        .frame(width: 46, height: 46)
+
+                    Image(systemName: systemImage)
+                        .font(.title3)
+                        .foregroundStyle(Color.brewBrown)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title)
+                        .font(.headline)
+
+                    Text(message)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Text(hint)
+                .font(.footnote.weight(.semibold))
                 .foregroundStyle(Color.brewBrown)
-
-            Text(title)
-                .font(.headline)
-
-            Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.7))
+                .clipShape(Capsule())
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(18)
-        .background(Color(.secondarySystemBackground))
+        .padding(20)
+        .background(
+            LinearGradient(
+                colors: [Color.brewLatte.opacity(0.85), Color.white.opacity(0.92)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(Color.brewBrown.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 22))
+    }
+
+    private func focusMap(on cafe: Cafe, using proxy: ScrollViewProxy) {
+        selectedMapCafe = cafe
+        withAnimation(.easeInOut(duration: 0.25)) {
+            proxy.scrollTo(mapSectionID, anchor: .top)
+        }
+    }
+
+    private func tagPill(_ text: String, tint: Color, background: Color) -> some View {
+        Text(text)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(tint)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(background)
+            .clipShape(Capsule())
+    }
+
+    private func heroMetricCard(title: String, value: String, caption: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Color.white.opacity(0.72))
+
+            Text(value)
+                .font(.title3.bold())
+                .foregroundStyle(.white)
+
+            Text(caption)
+                .font(.footnote)
+                .foregroundStyle(Color.white.opacity(0.78))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(Color.white.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 }

@@ -29,6 +29,7 @@ final class ReviewStore: ObservableObject {
     func loadReviews(for cafe: Cafe) async {
         guard !loadingCafeIDs.contains(cafe.id) else { return }
 
+        errorMessage = nil
         loadingCafeIDs.insert(cafe.id)
         defer { loadingCafeIDs.remove(cafe.id) }
 
