@@ -34,6 +34,7 @@
 - v 브라우저용 UI 목업 파일 추가
 - v 로그인/운영/시드/Supabase 검증 문서 정리
 - v 개인정보처리방침 / 이용약관 / 위치정보 처리 기준안 정리
+- v GitHub Pages 지원/정책 페이지 공개
 - v ONE_PAGER / LOGIN_FLOW / ERD / README / API_SPEC / 백엔드 / Supabase 문서 기준선 정리
 - v GitHub `main` 브랜치 반영 완료
 
@@ -129,12 +130,18 @@
 - v 신고/관리 최소 운영 정책 최종 정리
 
 ## 6. 출시 전 문서
-- [ ] 개인정보처리방침 최종본 정리
-- [ ] 이용약관 최종본 정리
+- v 개인정보처리방침 공개본 정리 및 GitHub Pages 반영
+- v 이용약관 공개본 정리 및 GitHub Pages 반영
 - v 현재 MVP는 개인위치정보 미수집으로 별도 위치기반서비스 약관 비공개 유지
 - [ ] 앱스토어 제출용 설명/스크린샷 준비
 - [ ] 테스트 계정 준비
-현재 상태: Auth 계정 / `public.users` 정합성 / 카페 24개 / 리뷰 36개 반영과 앱 내 end-to-end QA는 확인 완료했고, 현재 MVP는 이메일 로그인 기준으로 정리했다. 다음은 이메일 QA 보강과 출시 문서 마무리다
+현재 상태: Auth 계정 / `public.users` 정합성 / 카페 24개 / 리뷰 36개 반영과 앱 내 end-to-end QA는 확인 완료했고, 현재 MVP는 이메일 로그인 기준으로 정리했다. 지원/개인정보처리방침/이용약관 페이지는 GitHub Pages에 공개했다.
+
+공개 URL:
+- 메인: `https://hwang-john.github.io/brewspot/`
+- 지원: `https://hwang-john.github.io/brewspot/support.html`
+- 개인정보처리방침: `https://hwang-john.github.io/brewspot/privacy-policy.html`
+- 이용약관: `https://hwang-john.github.io/brewspot/terms.html`
 
 ## 7. 이번 버전에서 미루기
 - [ ] Google 로그인 구현
