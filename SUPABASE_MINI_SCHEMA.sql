@@ -162,11 +162,84 @@ create table if not exists public.bookmarks (
 
 alter table public.bookmarks add column if not exists created_at timestamptz not null default now();
 
+create table if not exists public.community_posts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  author_nickname varchar(30) not null,
+  board_type varchar(30) not null default '자유',
+  title varchar(120) not null,
+  content text not null,
+  city varchar(50) not null default '동네 미정',
+  like_count integer not null default 0,
+  comment_count integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.community_posts add column if not exists author_nickname varchar(30);
+alter table public.community_posts add column if not exists board_type varchar(30) not null default '자유';
+alter table public.community_posts add column if not exists title varchar(120);
+alter table public.community_posts add column if not exists content text;
+alter table public.community_posts add column if not exists city varchar(50) not null default '동네 미정';
+alter table public.community_posts add column if not exists like_count integer not null default 0;
+alter table public.community_posts add column if not exists comment_count integer not null default 0;
+alter table public.community_posts add column if not exists created_at timestamptz not null default now();
+alter table public.community_posts add column if not exists updated_at timestamptz not null default now();
+
+update public.community_posts
+set author_nickname = coalesce(author_nickname, '브루스팟 사용자')
+where author_nickname is null;
+
+alter table public.community_posts alter column author_nickname set not null;
+alter table public.community_posts alter column title set not null;
+alter table public.community_posts alter column content set not null;
+
+create table if not exists public.homebarista_posts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.users(id) on delete cascade,
+  author_nickname varchar(30) not null,
+  brew_method varchar(40) not null default 'V60',
+  title varchar(120) not null,
+  bean_name varchar(120) not null,
+  ratio_note varchar(120) not null,
+  tasting_note text not null,
+  brew_note text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.homebarista_posts add column if not exists author_nickname varchar(30);
+alter table public.homebarista_posts add column if not exists brew_method varchar(40) not null default 'V60';
+alter table public.homebarista_posts add column if not exists title varchar(120);
+alter table public.homebarista_posts add column if not exists bean_name varchar(120);
+alter table public.homebarista_posts add column if not exists ratio_note varchar(120);
+alter table public.homebarista_posts add column if not exists tasting_note text;
+alter table public.homebarista_posts add column if not exists brew_note text;
+alter table public.homebarista_posts add column if not exists created_at timestamptz not null default now();
+alter table public.homebarista_posts add column if not exists updated_at timestamptz not null default now();
+
+update public.homebarista_posts
+set author_nickname = coalesce(author_nickname, '브루스팟 사용자')
+where author_nickname is null;
+
+alter table public.homebarista_posts alter column author_nickname set not null;
+alter table public.homebarista_posts alter column title set not null;
+alter table public.homebarista_posts alter column bean_name set not null;
+alter table public.homebarista_posts alter column ratio_note set not null;
+alter table public.homebarista_posts alter column tasting_note set not null;
+alter table public.homebarista_posts alter column brew_note set not null;
+
 create index if not exists idx_user_identities_user_id on public.user_identities(user_id);
 create index if not exists idx_reviews_cafe_id on public.reviews(cafe_id);
 create index if not exists idx_reviews_user_id on public.reviews(user_id);
 create index if not exists idx_bookmarks_user_id on public.bookmarks(user_id);
 create index if not exists idx_bookmarks_cafe_id on public.bookmarks(cafe_id);
+create index if not exists idx_community_posts_user_id on public.community_posts(user_id);
+create index if not exists idx_community_posts_board_type on public.community_posts(board_type);
+create index if not exists idx_community_posts_created_at on public.community_posts(created_at desc);
+create index if not exists idx_homebarista_posts_user_id on public.homebarista_posts(user_id);
+create index if not exists idx_homebarista_posts_brew_method on public.homebarista_posts(brew_method);
+create index if not exists idx_homebarista_posts_created_at on public.homebarista_posts(created_at desc);
 
 drop trigger if exists users_set_updated_at on public.users;
 create trigger users_set_updated_at
@@ -181,6 +254,16 @@ for each row execute function public.set_updated_at();
 drop trigger if exists reviews_set_updated_at on public.reviews;
 create trigger reviews_set_updated_at
 before update on public.reviews
+for each row execute function public.set_updated_at();
+
+drop trigger if exists community_posts_set_updated_at on public.community_posts;
+create trigger community_posts_set_updated_at
+before update on public.community_posts
+for each row execute function public.set_updated_at();
+
+drop trigger if exists homebarista_posts_set_updated_at on public.homebarista_posts;
+create trigger homebarista_posts_set_updated_at
+before update on public.homebarista_posts
 for each row execute function public.set_updated_at();
 
 create or replace function public.handle_new_auth_user()
@@ -279,6 +362,8 @@ alter table public.user_identities enable row level security;
 alter table public.cafes enable row level security;
 alter table public.reviews enable row level security;
 alter table public.bookmarks enable row level security;
+alter table public.community_posts enable row level security;
+alter table public.homebarista_posts enable row level security;
 
 drop policy if exists "Users can read their own profile" on public.users;
 create policy "Users can read their own profile"
@@ -373,8 +458,68 @@ for delete
 to authenticated
 using (auth.uid() = user_id);
 
+drop policy if exists "Public can read community posts" on public.community_posts;
+create policy "Public can read community posts"
+on public.community_posts
+for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Users can insert their own community posts" on public.community_posts;
+create policy "Users can insert their own community posts"
+on public.community_posts
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own community posts" on public.community_posts;
+create policy "Users can update their own community posts"
+on public.community_posts
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own community posts" on public.community_posts;
+create policy "Users can delete their own community posts"
+on public.community_posts
+for delete
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists "Public can read homebarista posts" on public.homebarista_posts;
+create policy "Public can read homebarista posts"
+on public.homebarista_posts
+for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Users can insert their own homebarista posts" on public.homebarista_posts;
+create policy "Users can insert their own homebarista posts"
+on public.homebarista_posts
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own homebarista posts" on public.homebarista_posts;
+create policy "Users can update their own homebarista posts"
+on public.homebarista_posts
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete their own homebarista posts" on public.homebarista_posts;
+create policy "Users can delete their own homebarista posts"
+on public.homebarista_posts
+for delete
+to authenticated
+using (auth.uid() = user_id);
+
 comment on table public.users is '서비스 사용자 기본 정보';
 comment on table public.user_identities is '이메일, Google 등 로그인 연결 정보';
 comment on table public.cafes is '카페 기본 정보';
 comment on table public.reviews is '카페 리뷰';
 comment on table public.bookmarks is '사용자 저장 카페';
+comment on table public.community_posts is '커뮤니티 게시판 글';
+comment on table public.homebarista_posts is '홈바리스타 레시피 글';
