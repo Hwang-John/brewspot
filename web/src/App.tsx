@@ -339,7 +339,7 @@ export default function App() {
   const [homeBaristaPosts, setHomeBaristaPosts] = useState<HomeBaristaPost[]>([]);
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [statusMessage, setStatusMessage] = useState(
-    "모바일 웹 버전에 커뮤니티, 랭킹, 홈바리스타 페이지를 확장하고 있어요."
+    "브루스팟 모바일 웹을 불러오고 있어요."
   );
   const [isBooting, setIsBooting] = useState(true);
   const [isAuthBusy, setIsAuthBusy] = useState(false);
@@ -427,7 +427,7 @@ export default function App() {
           loadStoredObjectArray<HomeBaristaPost>(demoHomeBaristaStorageKey, demoHomeBaristaPosts)
         );
         setSelectedCafeId(demoCafes[0]?.id ?? "");
-        setStatusMessage("데모 데이터로 모바일 웹앱 전체 흐름을 확인할 수 있어요.");
+        setStatusMessage("기본 데이터로 화면을 불러왔어요. 로그인과 주요 흐름을 바로 둘러볼 수 있어요.");
         setIsBooting(false);
         return;
       }
@@ -467,7 +467,7 @@ export default function App() {
           setHomeBaristaPosts(mergeById(storedLocalHomeBarista, demoHomeBaristaPosts));
         }
 
-        setStatusMessage("Supabase와 연결되었어요. 모바일 웹 페이지 구조로 이어서 볼 수 있습니다.");
+        setStatusMessage("브루스팟 계정과 연결되었어요. 모바일 웹에서 바로 이어서 사용할 수 있습니다.");
       } catch (error) {
         setStatusMessage(
           getErrorMessage(error, "Supabase 연결에 실패해서 현재 화면을 불러오지 못했어요.")
@@ -880,7 +880,7 @@ export default function App() {
           nickname: nickname.trim() || demoUser.nickname,
           email: email.trim() || demoUser.email
         });
-        setStatusMessage("데모 계정으로 로그인했어요. 전체 웹 흐름을 바로 둘러볼 수 있습니다.");
+        setStatusMessage("미리보기 세션으로 로그인했어요. 전체 웹 흐름을 바로 둘러볼 수 있습니다.");
         navigate({ name: "home" }, true);
         return;
       }
@@ -908,7 +908,7 @@ export default function App() {
     try {
       if (isDemoMode) {
         setCurrentUser(null);
-        setStatusMessage("데모 로그아웃 상태예요.");
+        setStatusMessage("로그아웃했어요.");
         navigate({ name: "login" }, true);
         return;
       }
@@ -1148,7 +1148,6 @@ export default function App() {
             authIntent={authIntent}
             email={email}
             isAuthBusy={isAuthBusy}
-            isDemoMode={isDemoMode}
             nickname={nickname}
             onAuthIntentChange={setAuthIntent}
             onSubmit={handleAuthSubmit}
@@ -1191,7 +1190,6 @@ export default function App() {
                   getDistanceText={getDistanceText}
                   handlePrimaryLocationAction={handlePrimaryLocationAction}
                   isBookmarkBusy={isBookmarkBusy}
-                  isDemoMode={isDemoMode}
                   isLocationRefreshing={isLocationRefreshing}
                   locationAccessState={locationAccessState}
                   locationRefreshText={locationRefreshText}
@@ -1307,7 +1305,6 @@ export default function App() {
               {route.name === "profile" ? (
                 <ProfilePage
                   currentUser={currentUser}
-                  isDemoMode={isDemoMode}
                   onSignOut={handleSignOut}
                   savedCafeCount={savedCafes.length}
                   totalReviewCount={myReviewCount}
@@ -1352,7 +1349,6 @@ function LoginPage(props: {
   authIntent: AuthIntent;
   email: string;
   isAuthBusy: boolean;
-  isDemoMode: boolean;
   nickname: string;
   onAuthIntentChange: (value: AuthIntent) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -1366,7 +1362,6 @@ function LoginPage(props: {
     authIntent,
     email,
     isAuthBusy,
-    isDemoMode,
     nickname,
     onAuthIntentChange,
     onSubmit,
@@ -1411,20 +1406,11 @@ function LoginPage(props: {
             <input onChange={(event) => setPassword(event.target.value)} placeholder="8자 이상" type="password" value={password} />
           </label>
           <button className="primary-cta" disabled={isAuthBusy} type="submit">
-            {isAuthBusy
-              ? "처리 중..."
-              : authIntent === "signin"
-                ? isDemoMode
-                  ? "데모로 시작"
-                  : "이메일 로그인"
-                : "이메일 회원가입"}
+            {isAuthBusy ? "처리 중..." : authIntent === "signin" ? "이메일 로그인" : "이메일 회원가입"}
           </button>
         </form>
 
         <div className="info-panel">
-          <span className={`mode-badge ${isDemoMode ? "demo" : "live"}`}>
-            {isDemoMode ? "Demo Data" : "Supabase Live"}
-          </span>
           <p>{statusMessage}</p>
         </div>
       </div>
@@ -1443,7 +1429,6 @@ function HomePage(props: {
   getDistanceText: (cafe: Cafe) => string | null;
   handlePrimaryLocationAction: () => void;
   isBookmarkBusy: boolean;
-  isDemoMode: boolean;
   isLocationRefreshing: boolean;
   locationAccessState: LocationAccessState;
   locationRefreshText: string | null;
@@ -1472,7 +1457,6 @@ function HomePage(props: {
     getDistanceText,
     handlePrimaryLocationAction,
     isBookmarkBusy,
-    isDemoMode,
     isLocationRefreshing,
     locationAccessState,
     locationRefreshText,
@@ -1499,9 +1483,6 @@ function HomePage(props: {
             <p className="eyebrow">Home</p>
             <h2>{currentUser ? `${currentUser.nickname}님, 오늘은 어디로 갈까요?` : "오늘의 BrewSpot"}</h2>
           </div>
-          <span className={`mode-badge ${isDemoMode ? "demo" : "live"}`}>
-            {isDemoMode ? "Demo" : "Live"}
-          </span>
         </div>
         <p className="hero-copy">홈에서는 카페 탐색에 집중하고, 라운지 이야기는 하단 `라운지` 탭에서 이어보세요.</p>
         {nearestVisibleCafe ? (
@@ -2120,12 +2101,11 @@ function SavedPage(props: {
 
 function ProfilePage(props: {
   currentUser: AppUser | null;
-  isDemoMode: boolean;
   onSignOut: () => void;
   savedCafeCount: number;
   totalReviewCount: number;
 }) {
-  const { currentUser, isDemoMode, onSignOut, savedCafeCount, totalReviewCount } = props;
+  const { currentUser, onSignOut, savedCafeCount, totalReviewCount } = props;
 
   return (
     <div className="page-stack">
@@ -2133,9 +2113,6 @@ function ProfilePage(props: {
         <div className="avatar-circle">{(currentUser?.nickname ?? "B").slice(0, 1)}</div>
         <strong>{currentUser?.nickname ?? "로그인 필요"}</strong>
         <p>{currentUser?.email ?? "이메일 로그인 후 계정 정보가 이곳에 표시됩니다."}</p>
-        <span className={`mode-badge ${isDemoMode ? "demo" : "live"}`}>
-          {isDemoMode ? "Demo Account" : "Linked to Supabase"}
-        </span>
       </section>
 
       <section className="stats-grid">
