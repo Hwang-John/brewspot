@@ -133,7 +133,7 @@ textarea:focus {
 
 .screen-content {
   padding: 16px;
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  padding-bottom: calc(162px + env(safe-area-inset-bottom));
 }
 
 .login-screen {
@@ -549,6 +549,13 @@ textarea:focus {
   border: 1px solid rgba(255, 255, 255, 0.74);
 }
 
+.lounge-tabs-fixed {
+  width: 100%;
+  backdrop-filter: blur(18px);
+  background: rgba(255, 251, 246, 0.9);
+  box-shadow: 0 12px 26px rgba(78, 48, 28, 0.1);
+}
+
 .lounge-tabs button {
   border: 0;
   min-height: 42px;
@@ -635,6 +642,7 @@ textarea:focus {
   border-radius: 24px;
   display: grid;
   gap: 10px;
+  cursor: pointer;
 }
 
 .cafe-card-body {
@@ -713,6 +721,17 @@ textarea:focus {
   gap: 14px;
 }
 
+.detail-body-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.detail-body-copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
 .detail-hero-panel {
   padding: 20px 18px;
   border-radius: var(--radius-xl);
@@ -748,12 +767,17 @@ textarea:focus {
   margin-bottom: 8px;
 }
 
-.bottom-nav {
+.bottom-action-stack {
   position: absolute;
   left: 14px;
   right: 14px;
   bottom: calc(14px + env(safe-area-inset-bottom));
-  z-index: 5;
+  z-index: 6;
+  display: grid;
+  gap: 10px;
+}
+
+.bottom-nav {
   backdrop-filter: blur(18px);
   background: rgba(255, 251, 246, 0.9);
   box-shadow: 0 16px 32px rgba(78, 48, 28, 0.14);
@@ -801,7 +825,7 @@ textarea:focus {
 @media (max-width: 360px) {
   .screen-content {
     padding: 14px;
-    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+    padding-bottom: calc(162px + env(safe-area-inset-bottom));
   }
 
   .shortcut-grid,

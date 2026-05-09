@@ -54,8 +54,10 @@ type AppRoute =
   | { name: "login" }
   | { name: "home" }
   | { name: "community" }
+  | { name: "communityPost"; postId: string }
   | { name: "ranking" }
   | { name: "homebarista" }
+  | { name: "homebaristaPost"; postId: string }
   | { name: "saved" }
   | { name: "profile" }
   | { name: "cafe"; cafeId: string };
@@ -66,6 +68,14 @@ function parseHash(hash: string): AppRoute {
 
   if (parts[0] === "cafes" && parts[1]) {
     return { name: "cafe", cafeId: decodeURIComponent(parts[1]) };
+  }
+
+  if (parts[0] === "community" && parts[1]) {
+    return { name: "communityPost", postId: decodeURIComponent(parts[1]) };
+  }
+
+  if (parts[0] === "homebarista" && parts[1]) {
+    return { name: "homebaristaPost", postId: decodeURIComponent(parts[1]) };
   }
 
   switch (parts[0]) {
@@ -93,10 +103,14 @@ function buildHash(route: AppRoute) {
       return "#/home";
     case "community":
       return "#/community";
+    case "communityPost":
+      return `#/community/${encodeURIComponent(route.postId)}`;
     case "ranking":
       return "#/ranking";
     case "homebarista":
       return "#/homebarista";
+    case "homebaristaPost":
+      return `#/homebarista/${encodeURIComponent(route.postId)}`;
     case "saved":
       return "#/saved";
     case "profile":
@@ -597,6 +611,14 @@ export default function App() {
   const selectedCafe =
     cafes.find((cafe) => cafe.id === selectedCafeId) ??
     (route.name === "cafe" ? cafes.find((cafe) => cafe.id === route.cafeId) ?? null : null);
+  const selectedCommunityPost =
+    route.name === "communityPost"
+      ? communityPosts.find((post) => post.id === route.postId) ?? null
+      : null;
+  const selectedHomeBaristaPost =
+    route.name === "homebaristaPost"
+      ? homeBaristaPosts.find((post) => post.id === route.postId) ?? null
+      : null;
 
   const savedCafes = cafes.filter((cafe) => bookmarkIds.includes(cafe.id));
   const selectedCafeReviews = selectedCafe ? reviewsByCafe[selectedCafe.id] ?? [] : [];
@@ -616,6 +638,22 @@ export default function App() {
       : formatRefreshTime(lastLocationRefreshAt)
         ? `최근 확인: ${formatRefreshTime(lastLocationRefreshAt)}`
         : null;
+
+  useEffect(() => {
+    if (route.name === "communityPost" && !selectedCommunityPost && communityPosts.length > 0) {
+      navigate({ name: "community" }, true);
+    }
+  }, [communityPosts.length, route, selectedCommunityPost]);
+
+  useEffect(() => {
+    if (
+      route.name === "homebaristaPost" &&
+      !selectedHomeBaristaPost &&
+      homeBaristaPosts.length > 0
+    ) {
+      navigate({ name: "homebarista" }, true);
+    }
+  }, [homeBaristaPosts.length, route, selectedHomeBaristaPost]);
 
   const communityCategories = useMemo(
     () => ["전체", ...Array.from(new Set(communityPosts.map((post) => post.category)))],
@@ -800,6 +838,14 @@ export default function App() {
   function openCafe(cafeId: string) {
     setSelectedCafeId(cafeId);
     navigate({ name: "cafe", cafeId });
+  }
+
+  function openCommunityPost(postId: string) {
+    navigate({ name: "communityPost", postId });
+  }
+
+  function openHomeBaristaPost(postId: string) {
+    navigate({ name: "homebaristaPost", postId });
   }
 
   async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1094,9 +1140,19 @@ export default function App() {
         ) : (
           <>
             <TopBar
-              onBack={route.name === "cafe" ? () => navigate({ name: "home" }) : undefined}
+              onBack={
+                route.name === "cafe"
+                  ? () => navigate({ name: "home" })
+                  : route.name === "communityPost"
+                    ? () => navigate({ name: "community" })
+                    : route.name === "homebaristaPost"
+                      ? () => navigate({ name: "homebarista" })
+                      : undefined
+              }
               route={route}
               selectedCafeName={selectedCafe?.name ?? null}
+              selectedCommunityTitle={selectedCommunityPost?.title ?? null}
+              selectedHomeBaristaTitle={selectedHomeBaristaPost?.title ?? null}
             />
 
             <div className="screen-content">
@@ -1154,11 +1210,15 @@ export default function App() {
                   onCityDraftChange={setCommunityCityDraft}
                   onComposerToggle={() => setCommunityComposerOpen((current) => !current)}
                   onContentDraftChange={setCommunityContentDraft}
-                  onNavigate={navigate}
+                  onOpenPost={openCommunityPost}
                   onSearchChange={setCommunitySearchText}
                   onSubmit={handleCommunitySubmit}
                   onTitleDraftChange={setCommunityTitleDraft}
                 />
+              ) : null}
+
+              {route.name === "communityPost" && selectedCommunityPost ? (
+                <CommunityPostDetailPage post={selectedCommunityPost} />
               ) : null}
 
               {route.name === "ranking" ? (
@@ -1166,7 +1226,6 @@ export default function App() {
                   currentLocation={currentLocation}
                   onCityChange={setRankingCity}
                   onModeChange={setRankingMode}
-                  onNavigate={navigate}
                   onOpenCafe={openCafe}
                   rankingCity={rankingCity}
                   rankingEntries={rankingEntries}
@@ -1200,7 +1259,7 @@ export default function App() {
                   onBrewNoteDraftChange={setBrewNoteDraft}
                   onComposerToggle={() => setHomeBaristaComposerOpen((current) => !current)}
                   onMethodFilterChange={setHomeBaristaMethod}
-                  onNavigate={navigate}
+                  onOpenPost={openHomeBaristaPost}
                   onRatioDraftChange={setRatioNoteDraft}
                   onSubmit={handleHomeBaristaSubmit}
                   onTastingDraftChange={setTastingNoteDraft}
@@ -1210,6 +1269,10 @@ export default function App() {
                   tastingNoteDraft={tastingNoteDraft}
                   titleDraft={brewTitleDraft}
                 />
+              ) : null}
+
+              {route.name === "homebaristaPost" && selectedHomeBaristaPost ? (
+                <HomeBaristaDetailPage post={selectedHomeBaristaPost} />
               ) : null}
 
               {route.name === "saved" ? (
@@ -1255,7 +1318,7 @@ export default function App() {
             </div>
 
             {isAuthenticated ? (
-              <BottomNavigation
+              <BottomActionStack
                 currentRoute={route}
                 onNavigate={(nextRoute) => startTransition(() => navigate(nextRoute))}
               />
@@ -1607,7 +1670,7 @@ function CommunityPage(props: {
   onCityDraftChange: (value: string) => void;
   onComposerToggle: () => void;
   onContentDraftChange: (value: string) => void;
-  onNavigate: (route: AppRoute) => void;
+  onOpenPost: (postId: string) => void;
   onSearchChange: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onTitleDraftChange: (value: string) => void;
@@ -1626,7 +1689,7 @@ function CommunityPage(props: {
     onCityDraftChange,
     onComposerToggle,
     onContentDraftChange,
-    onNavigate,
+    onOpenPost,
     onSearchChange,
     onSubmit,
     onTitleDraftChange
@@ -1634,8 +1697,6 @@ function CommunityPage(props: {
 
   return (
     <div className="page-stack">
-      <LoungeTabs current="community" onNavigate={onNavigate} />
-
       <section className="hero-panel compact">
         <p className="eyebrow">Brew Talk</p>
         <h2>카페 취향을 나누는 게시판</h2>
@@ -1695,7 +1756,7 @@ function CommunityPage(props: {
       ) : (
         <div className="card-list">
           {communityPosts.map((post) => (
-            <article className="post-card" key={post.id}>
+            <button className="post-card" key={post.id} onClick={() => onOpenPost(post.id)} type="button">
               <div className="card-topline">
                 <div className="chip-wrap">
                   <span className="city-badge">{post.city}</span>
@@ -1711,7 +1772,7 @@ function CommunityPage(props: {
                 <span>좋아요 {post.likeCount}</span>
                 <span>댓글 {post.commentCount}</span>
               </div>
-            </article>
+            </button>
           ))}
         </div>
       )}
@@ -1723,7 +1784,6 @@ function RankingPage(props: {
   currentLocation: BrowserLocation | null;
   onCityChange: (value: string) => void;
   onModeChange: (value: RankingMode) => void;
-  onNavigate: (route: AppRoute) => void;
   onOpenCafe: (cafeId: string) => void;
   rankingCity: string;
   rankingCities: string[];
@@ -1735,7 +1795,6 @@ function RankingPage(props: {
     currentLocation,
     onCityChange,
     onModeChange,
-    onNavigate,
     onOpenCafe,
     rankingCity,
     rankingCities,
@@ -1746,8 +1805,6 @@ function RankingPage(props: {
 
   return (
     <div className="page-stack">
-      <LoungeTabs current="ranking" onNavigate={onNavigate} />
-
       <section className="hero-panel compact">
         <p className="eyebrow">Brew Rank</p>
         <h2>지금 주목할 카페 랭킹</h2>
@@ -1816,7 +1873,7 @@ function HomeBaristaPage(props: {
   onBrewNoteDraftChange: (value: string) => void;
   onComposerToggle: () => void;
   onMethodFilterChange: (value: string) => void;
-  onNavigate: (route: AppRoute) => void;
+  onOpenPost: (postId: string) => void;
   onRatioDraftChange: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onTastingDraftChange: (value: string) => void;
@@ -1839,7 +1896,7 @@ function HomeBaristaPage(props: {
     onBrewNoteDraftChange,
     onComposerToggle,
     onMethodFilterChange,
-    onNavigate,
+    onOpenPost,
     onRatioDraftChange,
     onSubmit,
     onTastingDraftChange,
@@ -1852,8 +1909,6 @@ function HomeBaristaPage(props: {
 
   return (
     <div className="page-stack">
-      <LoungeTabs current="homebarista" onNavigate={onNavigate} />
-
       <section className="hero-panel compact">
         <p className="eyebrow">Home Brew</p>
         <h2>집에서도 BrewSpot 취향을 이어가요</h2>
@@ -1922,7 +1977,7 @@ function HomeBaristaPage(props: {
       ) : (
         <div className="card-list">
           {posts.map((post) => (
-            <article className="post-card" key={post.id}>
+            <button className="post-card" key={post.id} onClick={() => onOpenPost(post.id)} type="button">
               <div className="card-topline">
                 <div className="chip-wrap">
                   <span className="city-badge">{post.brewMethod}</span>
@@ -1937,10 +1992,95 @@ function HomeBaristaPage(props: {
                 <span>{post.ratioNote}</span>
                 <span>{post.authorName}</span>
               </div>
-            </article>
+            </button>
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function CommunityPostDetailPage(props: { post: CommunityPost }) {
+  const { post } = props;
+
+  return (
+    <div className="page-stack detail-page">
+      <section className="detail-hero-panel">
+        <div className="hero-row">
+          <div>
+            <p className="eyebrow">{post.city}</p>
+            <h2>{post.title}</h2>
+          </div>
+          <span className="meta-pill">{formatRelativeDate(post.createdAt)}</span>
+        </div>
+        <p className="hero-copy">{post.category} 카테고리의 커뮤니티 글입니다.</p>
+        <div className="meta-wrap">
+          <span>{post.authorName}</span>
+          <span>좋아요 {post.likeCount}</span>
+          <span>댓글 {post.commentCount}</span>
+        </div>
+      </section>
+
+      <section className="panel-card">
+        <p className="section-caption">본문</p>
+        <div className="detail-body-copy">
+          {post.content.split("\n").map((line, index) => (
+            <p key={`${post.id}-${index}`}>{line}</p>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function HomeBaristaDetailPage(props: { post: HomeBaristaPost }) {
+  const { post } = props;
+
+  return (
+    <div className="page-stack detail-page">
+      <section className="detail-hero-panel">
+        <div className="hero-row">
+          <div>
+            <p className="eyebrow">{post.brewMethod}</p>
+            <h2>{post.title}</h2>
+          </div>
+          <span className="meta-pill">{formatRelativeDate(post.createdAt)}</span>
+        </div>
+        <p className="hero-copy">{post.authorName}님의 홈바리스타 메모입니다.</p>
+        <div className="meta-wrap">
+          <span>{post.beanName}</span>
+          <span>{post.ratioNote}</span>
+        </div>
+      </section>
+
+      <section className="detail-grid">
+        <div className="panel-card soft">
+          <span className="mini-label">원두</span>
+          <strong>{post.beanName}</strong>
+        </div>
+        <div className="panel-card soft">
+          <span className="mini-label">비율 메모</span>
+          <strong>{post.ratioNote}</strong>
+        </div>
+      </section>
+
+      <section className="panel-card">
+        <p className="section-caption">테이스팅 노트</p>
+        <div className="detail-body-copy">
+          {post.tastingNote.split("\n").map((line, index) => (
+            <p key={`${post.id}-tasting-${index}`}>{line}</p>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel-card">
+        <p className="section-caption">추출 메모</p>
+        <div className="detail-body-copy">
+          {post.brewNote.split("\n").map((line, index) => (
+            <p key={`${post.id}-brew-${index}`}>{line}</p>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
@@ -2226,42 +2366,27 @@ function CafeListCard(props: {
   );
 }
 
-function LoungeTabs(props: {
-  current: "community" | "ranking" | "homebarista";
-  onNavigate: (route: AppRoute) => void;
-}) {
-  const { current, onNavigate } = props;
-
-  return (
-    <section className="lounge-tabs">
-      <button className={current === "community" ? "active" : ""} onClick={() => onNavigate({ name: "community" })} type="button">
-        커뮤니티
-      </button>
-      <button className={current === "ranking" ? "active" : ""} onClick={() => onNavigate({ name: "ranking" })} type="button">
-        랭킹
-      </button>
-      <button className={current === "homebarista" ? "active" : ""} onClick={() => onNavigate({ name: "homebarista" })} type="button">
-        홈바리스타
-      </button>
-    </section>
-  );
-}
-
 function TopBar(props: {
   onBack?: () => void;
   route: AppRoute;
   selectedCafeName: string | null;
+  selectedCommunityTitle: string | null;
+  selectedHomeBaristaTitle: string | null;
 }) {
-  const { onBack, route, selectedCafeName } = props;
+  const { onBack, route, selectedCafeName, selectedCommunityTitle, selectedHomeBaristaTitle } = props;
 
   let title = "BrewSpot";
 
   if (route.name === "community") {
     title = "커뮤니티";
+  } else if (route.name === "communityPost") {
+    title = selectedCommunityTitle ?? "게시글";
   } else if (route.name === "ranking") {
     title = "랭킹";
   } else if (route.name === "homebarista") {
     title = "홈바리스타";
+  } else if (route.name === "homebaristaPost") {
+    title = selectedHomeBaristaTitle ?? "레시피";
   } else if (route.name === "saved") {
     title = "저장한 카페";
   } else if (route.name === "profile") {
@@ -2273,7 +2398,7 @@ function TopBar(props: {
   return (
     <header className="top-bar">
       <div className="top-bar-inner">
-        {route.name === "cafe" ? (
+        {route.name === "cafe" || route.name === "communityPost" || route.name === "homebaristaPost" ? (
           <button className="icon-button" onClick={onBack} type="button">
             이전
           </button>
@@ -2287,31 +2412,46 @@ function TopBar(props: {
   );
 }
 
-function BottomNavigation(props: {
+function BottomActionStack(props: {
   currentRoute: AppRoute;
   onNavigate: (route: AppRoute) => void;
 }) {
   const { currentRoute, onNavigate } = props;
   const isLoungeRoute =
     currentRoute.name === "community" ||
+    currentRoute.name === "communityPost" ||
     currentRoute.name === "ranking" ||
-    currentRoute.name === "homebarista";
+    currentRoute.name === "homebarista" ||
+    currentRoute.name === "homebaristaPost";
 
   return (
-    <nav className="bottom-nav">
-      <button className={currentRoute.name === "home" || currentRoute.name === "cafe" ? "active" : ""} onClick={() => onNavigate({ name: "home" })} type="button">
-        홈
-      </button>
-      <button className={isLoungeRoute ? "active" : ""} onClick={() => onNavigate({ name: "community" })} type="button">
-        라운지
-      </button>
-      <button className={currentRoute.name === "saved" ? "active" : ""} onClick={() => onNavigate({ name: "saved" })} type="button">
-        저장
-      </button>
-      <button className={currentRoute.name === "profile" ? "active" : ""} onClick={() => onNavigate({ name: "profile" })} type="button">
-        마이
-      </button>
-    </nav>
+    <div className="bottom-action-stack">
+      <section className="lounge-tabs lounge-tabs-fixed">
+        <button className={currentRoute.name === "community" || currentRoute.name === "communityPost" ? "active" : ""} onClick={() => onNavigate({ name: "community" })} type="button">
+          커뮤니티
+        </button>
+        <button className={currentRoute.name === "ranking" ? "active" : ""} onClick={() => onNavigate({ name: "ranking" })} type="button">
+          랭킹
+        </button>
+        <button className={currentRoute.name === "homebarista" || currentRoute.name === "homebaristaPost" ? "active" : ""} onClick={() => onNavigate({ name: "homebarista" })} type="button">
+          홈바리스타
+        </button>
+      </section>
+      <nav className="bottom-nav">
+        <button className={currentRoute.name === "home" || currentRoute.name === "cafe" ? "active" : ""} onClick={() => onNavigate({ name: "home" })} type="button">
+          홈
+        </button>
+        <button className={isLoungeRoute ? "active" : ""} onClick={() => onNavigate({ name: "community" })} type="button">
+          라운지
+        </button>
+        <button className={currentRoute.name === "saved" ? "active" : ""} onClick={() => onNavigate({ name: "saved" })} type="button">
+          저장
+        </button>
+        <button className={currentRoute.name === "profile" ? "active" : ""} onClick={() => onNavigate({ name: "profile" })} type="button">
+          마이
+        </button>
+      </nav>
+    </div>
   );
 }
 
