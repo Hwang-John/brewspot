@@ -42,6 +42,9 @@ const localCommunityFallbackStorageKey = "brewspot-web-local-community-posts";
 const localHomeBaristaFallbackStorageKey = "brewspot-web-local-homebarista-posts";
 
 type LocationAccessState = "prompt" | "granted" | "denied" | "unsupported";
+type NearbyRadiusOption = 0 | 1 | 3 | 5;
+
+const nearbyRadiusOptions: NearbyRadiusOption[] = [0, 1, 3, 5];
 
 function buildPublicPageHref(path: string) {
   if (typeof window === "undefined") {
@@ -329,6 +332,7 @@ export default function App() {
   const [isLocationRefreshing, setIsLocationRefreshing] = useState(false);
   const [lastLocationRefreshAt, setLastLocationRefreshAt] = useState<number | null>(null);
   const [locationErrorMessage, setLocationErrorMessage] = useState<string | null>(null);
+  const [nearbyRadiusKm, setNearbyRadiusKm] = useState<NearbyRadiusOption>(0);
   const [communitySearchText, setCommunitySearchText] = useState("");
   const [communityCategory, setCommunityCategory] = useState("전체");
   const [communityComposerOpen, setCommunityComposerOpen] = useState(false);
@@ -599,8 +603,17 @@ export default function App() {
 
       const matchesCategory = selectedCategory === "전체" || cafe.category === selectedCategory;
       const matchesCity = selectedCity === "전체" || cafe.city === selectedCity;
+      const matchesRadius =
+        !currentLocation ||
+        nearbyRadiusKm === 0 ||
+        calculateDistanceInMeters(
+          currentLocation.latitude,
+          currentLocation.longitude,
+          cafe.latitude,
+          cafe.longitude
+        ) <= nearbyRadiusKm * 1000;
 
-      return matchesSearch && matchesCategory && matchesCity;
+      return matchesSearch && matchesCategory && matchesCity && matchesRadius;
     })
     .sort((left, right) => {
       if (!currentLocation) {
@@ -1192,9 +1205,11 @@ export default function App() {
                   onCategoryChange={setSelectedCategory}
                   onCityChange={setSelectedCity}
                   onOpenCafe={openCafe}
+                  onRadiusChange={setNearbyRadiusKm}
                   onRefreshLocation={() =>
                     requestCurrentLocation({ incrementCount: false, announce: true })
                   }
+                  nearbyRadiusKm={nearbyRadiusKm}
                   onSearchChange={setSearchText}
                   searchText={searchText}
                   selectedCategory={selectedCategory}
@@ -1421,6 +1436,16 @@ function LiveCafeMap(props: {
   const mapRef = useRef<L.Map | null>(null);
   const layerGroupRef = useRef<L.LayerGroup | null>(null);
 
+  function recenterToUser() {
+    if (!mapRef.current || !currentLocation) {
+      return;
+    }
+
+    mapRef.current.setView([currentLocation.latitude, currentLocation.longitude], 15, {
+      animate: true
+    });
+  }
+
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
       return;
@@ -1512,7 +1537,19 @@ function LiveCafeMap(props: {
     window.requestAnimationFrame(() => map.invalidateSize());
   }, [cafes, currentLocation, onOpenCafe, selectedCafeId]);
 
-  return <div className="map-board live-map-canvas" ref={containerRef} />;
+  return (
+    <div className="map-shell">
+      <div className="map-board live-map-canvas" ref={containerRef} />
+      <button
+        className="map-recenter-button"
+        disabled={!currentLocation}
+        onClick={recenterToUser}
+        type="button"
+      >
+        내 위치로 이동
+      </button>
+    </div>
+  );
 }
 
 function HomePage(props: {
@@ -1535,8 +1572,10 @@ function HomePage(props: {
   onCategoryChange: (value: string) => void;
   onCityChange: (value: string) => void;
   onOpenCafe: (cafeId: string) => void;
+  onRadiusChange: (value: NearbyRadiusOption) => void;
   onRefreshLocation: () => void;
   onSearchChange: (value: string) => void;
+  nearbyRadiusKm: NearbyRadiusOption;
   searchText: string;
   selectedCategory: string;
   selectedCity: string;
@@ -1562,7 +1601,9 @@ function HomePage(props: {
     onCategoryChange,
     onCityChange,
     onOpenCafe,
+    onRadiusChange,
     onRefreshLocation,
+    nearbyRadiusKm,
     onSearchChange,
     searchText,
     selectedCategory,
@@ -1619,6 +1660,28 @@ function HomePage(props: {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="chip-section">
+          <p className="section-caption">내 주변 반경</p>
+          <div className="chip-scroll">
+            {nearbyRadiusOptions.map((radius) => (
+              <button
+                className={nearbyRadiusKm === radius ? "filter-chip active" : "filter-chip"}
+                disabled={!currentLocation && radius !== 0}
+                key={radius}
+                onClick={() => onRadiusChange(radius)}
+                type="button"
+              >
+                {radius === 0 ? "전체" : `${radius}km`}
+              </button>
+            ))}
+          </div>
+          <p className="helper-text">
+            {currentLocation
+              ? `${nearbyRadiusKm === 0 ? "전체 지역" : `${nearbyRadiusKm}km 반경`} 기준으로 주변 카페를 보고 있어요.`
+              : "위치 권한을 허용하면 1km, 3km, 5km 반경만 따로 볼 수 있어요."}
+          </p>
         </div>
       </section>
 

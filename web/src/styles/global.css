@@ -539,6 +539,31 @@ textarea:focus {
   border: 1px solid rgba(255, 255, 255, 0.74);
 }
 
+.map-shell {
+  position: relative;
+}
+
+.map-recenter-button {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(96, 62, 39, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 250, 244, 0.94);
+  color: var(--brand);
+  box-shadow: 0 10px 22px rgba(72, 42, 24, 0.14);
+  font-weight: 700;
+  z-index: 500;
+}
+
+.map-recenter-button:disabled,
+.filter-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .live-map-canvas {
   background: #efe4d6;
 }
