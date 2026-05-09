@@ -1181,9 +1181,6 @@ export default function App() {
                   onCategoryChange={setSelectedCategory}
                   onCityChange={setSelectedCity}
                   onOpenCafe={openCafe}
-                  onOpenCommunity={() => navigate({ name: "community" })}
-                  onOpenHomeBarista={() => navigate({ name: "homebarista" })}
-                  onOpenRanking={() => navigate({ name: "ranking" })}
                   onRefreshLocation={() =>
                     requestCurrentLocation({ incrementCount: false, announce: true })
                   }
@@ -1436,9 +1433,6 @@ function HomePage(props: {
   onCategoryChange: (value: string) => void;
   onCityChange: (value: string) => void;
   onOpenCafe: (cafeId: string) => void;
-  onOpenCommunity: () => void;
-  onOpenHomeBarista: () => void;
-  onOpenRanking: () => void;
   onRefreshLocation: () => void;
   onSearchChange: (value: string) => void;
   searchText: string;
@@ -1468,9 +1462,6 @@ function HomePage(props: {
     onCategoryChange,
     onCityChange,
     onOpenCafe,
-    onOpenCommunity,
-    onOpenHomeBarista,
-    onOpenRanking,
     onRefreshLocation,
     onSearchChange,
     searchText,
@@ -1491,7 +1482,7 @@ function HomePage(props: {
             {isDemoMode ? "Demo" : "Live"}
           </span>
         </div>
-        <p className="hero-copy">홈에서 탐색을 시작하고, 버튼으로 라운지 페이지로 이동하는 모바일 구조입니다.</p>
+        <p className="hero-copy">홈에서는 카페 탐색에 집중하고, 라운지 이야기는 하단 `라운지` 탭에서 이어보세요.</p>
         {nearestVisibleCafe ? (
           <div className="quick-stat-card">
             <span className="mini-label">가장 가까운 카페</span>
@@ -1499,24 +1490,6 @@ function HomePage(props: {
             <p>{getDistanceText(nearestVisibleCafe)} · 지금 보고 있는 카페 중 가장 가깝습니다.</p>
           </div>
         ) : null}
-      </section>
-
-      <section className="shortcut-grid">
-        <button className="shortcut-card" onClick={onOpenCommunity} type="button">
-          <span className="mini-label">Brew Talk</span>
-          <strong>커뮤니티</strong>
-          <p>추천, 질문, 동네 이야기를 나누는 페이지</p>
-        </button>
-        <button className="shortcut-card" onClick={onOpenRanking} type="button">
-          <span className="mini-label">Brew Rank</span>
-          <strong>랭킹</strong>
-          <p>평점, 리뷰, 거리 기준으로 카페를 보는 페이지</p>
-        </button>
-        <button className="shortcut-card full" onClick={onOpenHomeBarista} type="button">
-          <span className="mini-label">Home Brew</span>
-          <strong>홈바리스타</strong>
-          <p>집에서 내리는 레시피와 원두 메모를 공유하는 페이지</p>
-        </button>
       </section>
 
       <section className="panel-card">
@@ -2426,17 +2399,19 @@ function BottomActionStack(props: {
 
   return (
     <div className="bottom-action-stack">
-      <section className="lounge-tabs lounge-tabs-fixed">
-        <button className={currentRoute.name === "community" || currentRoute.name === "communityPost" ? "active" : ""} onClick={() => onNavigate({ name: "community" })} type="button">
-          커뮤니티
-        </button>
-        <button className={currentRoute.name === "ranking" ? "active" : ""} onClick={() => onNavigate({ name: "ranking" })} type="button">
-          랭킹
-        </button>
-        <button className={currentRoute.name === "homebarista" || currentRoute.name === "homebaristaPost" ? "active" : ""} onClick={() => onNavigate({ name: "homebarista" })} type="button">
-          홈바리스타
-        </button>
-      </section>
+      {isLoungeRoute ? (
+        <section className="lounge-tabs lounge-tabs-fixed">
+          <button className={currentRoute.name === "community" || currentRoute.name === "communityPost" ? "active" : ""} onClick={() => onNavigate({ name: "community" })} type="button">
+            커뮤니티
+          </button>
+          <button className={currentRoute.name === "ranking" ? "active" : ""} onClick={() => onNavigate({ name: "ranking" })} type="button">
+            랭킹
+          </button>
+          <button className={currentRoute.name === "homebarista" || currentRoute.name === "homebaristaPost" ? "active" : ""} onClick={() => onNavigate({ name: "homebarista" })} type="button">
+            홈바리스타
+          </button>
+        </section>
+      ) : null}
       <nav className="bottom-nav">
         <button className={currentRoute.name === "home" || currentRoute.name === "cafe" ? "active" : ""} onClick={() => onNavigate({ name: "home" })} type="button">
           홈
