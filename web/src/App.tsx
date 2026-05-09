@@ -1,4 +1,5 @@
-import { FormEvent, startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { FormEvent, startTransition, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import * as L from "leaflet";
 
 import {
   demoCafes,
@@ -42,21 +43,29 @@ const localHomeBaristaFallbackStorageKey = "brewspot-web-local-homebarista-posts
 
 type LocationAccessState = "prompt" | "granted" | "denied" | "unsupported";
 
+function buildPublicPageHref(path: string) {
+  if (typeof window === "undefined") {
+    return `${import.meta.env.BASE_URL}${path}`;
+  }
+
+  return new URL(path, `${window.location.origin}${import.meta.env.BASE_URL}`).toString();
+}
+
 const publicInfoLinks = [
   {
-    href: `${import.meta.env.BASE_URL}privacy-policy.html`,
+    href: buildPublicPageHref("privacy-policy.html"),
     label: "개인정보 / 보안",
     eyebrow: "Privacy",
     description: "개인정보 처리, 위치정보 안내, 보안 대응 기준을 확인할 수 있어요."
   },
   {
-    href: `${import.meta.env.BASE_URL}terms.html`,
+    href: buildPublicPageHref("terms.html"),
     label: "이용약관",
     eyebrow: "Terms",
     description: "서비스 이용 조건과 계정, 콘텐츠 운영 기준을 안내합니다."
   },
   {
-    href: `${import.meta.env.BASE_URL}support.html`,
+    href: buildPublicPageHref("support.html"),
     label: "고객지원",
     eyebrow: "Support",
     description: "문의 방법과 운영 연락처, 추가 안내 링크를 확인할 수 있어요."
@@ -247,51 +256,6 @@ function findNearestCafe(location: BrowserLocation | null, cafes: Cafe[]): Cafe 
   return nearestCafe;
 }
 
-function buildMapLayout(cafes: Cafe[], currentLocation: BrowserLocation | null) {
-  const latitudes = cafes.map((cafe) => cafe.latitude);
-  const longitudes = cafes.map((cafe) => cafe.longitude);
-
-  if (currentLocation) {
-    latitudes.push(currentLocation.latitude);
-    longitudes.push(currentLocation.longitude);
-  }
-
-  if (latitudes.length === 0 || longitudes.length === 0) {
-    return {
-      cafePins: [] as Array<{ cafe: Cafe; left: number; top: number }>,
-      userPin: null as { left: number; top: number } | null
-    };
-  }
-
-  const minLatitude = Math.min(...latitudes);
-  const maxLatitude = Math.max(...latitudes);
-  const minLongitude = Math.min(...longitudes);
-  const maxLongitude = Math.max(...longitudes);
-  const latitudePadding = Math.max((maxLatitude - minLatitude) * 0.2, 0.006);
-  const longitudePadding = Math.max((maxLongitude - minLongitude) * 0.2, 0.006);
-  const boundedMinLatitude = minLatitude - latitudePadding;
-  const boundedMaxLatitude = maxLatitude + latitudePadding;
-  const boundedMinLongitude = minLongitude - longitudePadding;
-  const boundedMaxLongitude = maxLongitude + longitudePadding;
-  const latitudeSpan = Math.max(boundedMaxLatitude - boundedMinLatitude, 0.01);
-  const longitudeSpan = Math.max(boundedMaxLongitude - boundedMinLongitude, 0.01);
-
-  const project = (latitude: number, longitude: number) => ({
-    left: 10 + ((longitude - boundedMinLongitude) / longitudeSpan) * 80,
-    top: 12 + ((boundedMaxLatitude - latitude) / latitudeSpan) * 72
-  });
-
-  return {
-    cafePins: cafes.map((cafe) => ({
-      cafe,
-      ...project(cafe.latitude, cafe.longitude)
-    })),
-    userPin: currentLocation
-      ? project(currentLocation.latitude, currentLocation.longitude)
-      : null
-  };
-}
-
 function formatRefreshTime(timestamp: number | null) {
   if (!timestamp) {
     return null;
@@ -318,6 +282,15 @@ function previewText(content: string, length: number) {
   }
 
   return `${trimmed.slice(0, length)}...`;
+}
+
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 export default function App() {
@@ -608,26 +581,47 @@ export default function App() {
   const categories = ["전체", ...Array.from(new Set(cafes.map((cafe) => cafe.category)))];
   const cities = ["전체", ...Array.from(new Set(cafes.map((cafe) => cafe.city)))];
 
-  const filteredCafes = cafes.filter((cafe) => {
-    const matchesSearch =
-      !deferredSearchText ||
-      [
-        cafe.name,
-        cafe.address,
-        cafe.category,
-        cafe.city,
-        cafe.signatureMenu,
-        ...cafe.vibeTags
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(deferredSearchText);
+  const filteredCafes = cafes
+    .filter((cafe) => {
+      const matchesSearch =
+        !deferredSearchText ||
+        [
+          cafe.name,
+          cafe.address,
+          cafe.category,
+          cafe.city,
+          cafe.signatureMenu,
+          ...cafe.vibeTags
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(deferredSearchText);
 
-    const matchesCategory = selectedCategory === "전체" || cafe.category === selectedCategory;
-    const matchesCity = selectedCity === "전체" || cafe.city === selectedCity;
+      const matchesCategory = selectedCategory === "전체" || cafe.category === selectedCategory;
+      const matchesCity = selectedCity === "전체" || cafe.city === selectedCity;
 
-    return matchesSearch && matchesCategory && matchesCity;
-  });
+      return matchesSearch && matchesCategory && matchesCity;
+    })
+    .sort((left, right) => {
+      if (!currentLocation) {
+        return right.rating - left.rating || right.reviewCount - left.reviewCount;
+      }
+
+      const leftDistance = calculateDistanceInMeters(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        left.latitude,
+        left.longitude
+      );
+      const rightDistance = calculateDistanceInMeters(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        right.latitude,
+        right.longitude
+      );
+
+      return leftDistance - rightDistance || right.rating - left.rating;
+    });
 
   const selectedCafe =
     cafes.find((cafe) => cafe.id === selectedCafeId) ??
@@ -831,9 +825,9 @@ export default function App() {
         }
       },
       {
-        enableHighAccuracy: false,
-        timeout: 10000,
-        maximumAge: 1000 * 60 * 5
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
       }
     );
   }
@@ -1138,7 +1132,6 @@ export default function App() {
   }
 
   const isAuthenticated = Boolean(currentUser);
-  const mapLayout = buildMapLayout(filteredCafes, currentLocation);
 
   return (
     <div className="mobile-web">
@@ -1194,7 +1187,6 @@ export default function App() {
                   locationAccessState={locationAccessState}
                   locationRefreshText={locationRefreshText}
                   locationRequestCount={locationRequestCount}
-                  mapLayout={mapLayout}
                   nearestVisibleCafe={nearestFilteredCafe}
                   onBookmarkToggle={handleBookmarkToggle}
                   onCategoryChange={setSelectedCategory}
@@ -1418,6 +1410,111 @@ function LoginPage(props: {
   );
 }
 
+function LiveCafeMap(props: {
+  cafes: Cafe[];
+  currentLocation: BrowserLocation | null;
+  onOpenCafe: (cafeId: string) => void;
+  selectedCafeId: string;
+}) {
+  const { cafes, currentLocation, onOpenCafe, selectedCafeId } = props;
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const layerGroupRef = useRef<L.LayerGroup | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) {
+      return;
+    }
+
+    const map = L.map(containerRef.current, {
+      zoomControl: false,
+      attributionControl: true,
+      scrollWheelZoom: false
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+    L.control.zoom({ position: "topright" }).addTo(map);
+    layerGroupRef.current = L.layerGroup().addTo(map);
+    mapRef.current = map;
+
+    window.requestAnimationFrame(() => map.invalidateSize());
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      layerGroupRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mapRef.current || !layerGroupRef.current) {
+      return;
+    }
+
+    const map = mapRef.current;
+    const layerGroup = layerGroupRef.current;
+    layerGroup.clearLayers();
+
+    const bounds = L.latLngBounds([]);
+
+    cafes.forEach((cafe) => {
+      const isSelected = cafe.id === selectedCafeId;
+      const cafeMarker = L.marker([cafe.latitude, cafe.longitude], {
+        icon: L.divIcon({
+          className: "leaflet-marker-shell",
+          html: `<div class="leaflet-pill-marker${isSelected ? " selected" : ""}"><span>${escapeHtml(cafe.name)}</span></div>`,
+          iconSize: [124, 36],
+          iconAnchor: [62, 36]
+        })
+      });
+
+      cafeMarker.on("click", () => onOpenCafe(cafe.id));
+      cafeMarker.addTo(layerGroup);
+      bounds.extend([cafe.latitude, cafe.longitude]);
+    });
+
+    if (currentLocation) {
+      const accuracyRadius = Math.max(currentLocation.accuracy, 35);
+      L.circle([currentLocation.latitude, currentLocation.longitude], {
+        radius: accuracyRadius,
+        color: "#6f7d52",
+        weight: 1,
+        fillColor: "#9bb17b",
+        fillOpacity: 0.18
+      }).addTo(layerGroup);
+
+      L.marker([currentLocation.latitude, currentLocation.longitude], {
+        zIndexOffset: 1000,
+        icon: L.divIcon({
+          className: "leaflet-marker-shell",
+          html: '<div class="leaflet-user-marker"><span>내 위치</span></div>',
+          iconSize: [90, 34],
+          iconAnchor: [45, 34]
+        })
+      }).addTo(layerGroup);
+
+      bounds.extend([currentLocation.latitude, currentLocation.longitude]);
+    }
+
+    if (bounds.isValid()) {
+      map.fitBounds(bounds.pad(0.24), {
+        maxZoom: currentLocation ? 15 : 14,
+        animate: false
+      });
+    } else {
+      map.setView([37.5665, 126.978], 12);
+    }
+
+    window.requestAnimationFrame(() => map.invalidateSize());
+  }, [cafes, currentLocation, onOpenCafe, selectedCafeId]);
+
+  return <div className="map-board live-map-canvas" ref={containerRef} />;
+}
+
 function HomePage(props: {
   bookmarkIds: string[];
   categories: string[];
@@ -1433,7 +1530,6 @@ function HomePage(props: {
   locationAccessState: LocationAccessState;
   locationRefreshText: string | null;
   locationRequestCount: number;
-  mapLayout: ReturnType<typeof buildMapLayout>;
   nearestVisibleCafe: Cafe | null;
   onBookmarkToggle: (cafeId: string) => Promise<void>;
   onCategoryChange: (value: string) => void;
@@ -1461,7 +1557,6 @@ function HomePage(props: {
     locationAccessState,
     locationRefreshText,
     locationRequestCount,
-    mapLayout,
     nearestVisibleCafe,
     onBookmarkToggle,
     onCategoryChange,
@@ -1580,25 +1675,14 @@ function HomePage(props: {
       <section className="panel-card">
         <div className="section-head">
           <div>
-            <p className="section-caption">탐색 보드</p>
-            <h3>한눈에 보는 위치</h3>
+            <p className="section-caption">실시간 지도</p>
+            <h3>내 주변 카페 보기</h3>
           </div>
           <span className="meta-pill">{filteredCafes.length}곳</span>
         </div>
 
-        <div className="map-board">
-          <div className="map-grid" />
-          {mapLayout.userPin ? (
-            <button className="map-pin user" style={{ left: `${mapLayout.userPin.left}%`, top: `${mapLayout.userPin.top}%` }} type="button">
-              <span>내 위치</span>
-            </button>
-          ) : null}
-          {mapLayout.cafePins.map(({ cafe, left, top }) => (
-            <button className={selectedCafeId === cafe.id ? "map-pin active" : "map-pin"} key={cafe.id} onClick={() => onOpenCafe(cafe.id)} style={{ left: `${left}%`, top: `${top}%` }} type="button">
-              <span>{cafe.name}</span>
-            </button>
-          ))}
-        </div>
+        <LiveCafeMap currentLocation={currentLocation} onOpenCafe={onOpenCafe} cafes={filteredCafes} selectedCafeId={selectedCafeId} />
+        <p className="helper-text">지도 타일과 마커는 실제 좌표 기준으로 표시됩니다. 마커를 누르면 카페 상세로 이동해요.</p>
       </section>
 
       <section className="page-section">
@@ -2135,27 +2219,13 @@ function ProfilePage(props: {
         </div>
         <div className="resource-links">
           {publicInfoLinks.map((link) => (
-            <a className="resource-link-card" href={link.href} key={link.href} rel="noreferrer" target="_blank">
+            <a className="resource-link-card" href={link.href} key={link.href} rel="noopener noreferrer" target="_blank">
               <span className="mini-label">{link.eyebrow}</span>
               <strong>{link.label}</strong>
               <p>{link.description}</p>
             </a>
           ))}
         </div>
-      </section>
-
-      <section className="panel-card">
-        <div className="section-head">
-          <div>
-            <p className="section-caption">다음 작업</p>
-            <h3>웹 확장 로드맵</h3>
-          </div>
-        </div>
-        <ul className="simple-list">
-          <li>커뮤니티 상세 읽기 페이지</li>
-          <li>랭킹 세부 정렬 고도화</li>
-          <li>홈바리스타 상세 읽기와 저장 기능</li>
-        </ul>
       </section>
 
       <button className="secondary-cta full" onClick={onSignOut} type="button">

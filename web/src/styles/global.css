@@ -530,13 +530,83 @@ textarea:focus {
 
 .map-board {
   position: relative;
-  min-height: 220px;
+  min-height: 260px;
   border-radius: 24px;
   overflow: hidden;
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.78) 0%, transparent 28%),
     linear-gradient(135deg, #ead8c6 0%, #d9c0a7 100%);
   border: 1px solid rgba(255, 255, 255, 0.74);
+}
+
+.live-map-canvas {
+  background: #efe4d6;
+}
+
+.live-map-canvas.leaflet-container {
+  font-family: "Avenir Next", "Pretendard", "Apple SD Gothic Neo", sans-serif;
+}
+
+.live-map-canvas .leaflet-control-attribution {
+  background: rgba(255, 250, 244, 0.92);
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+
+.live-map-canvas .leaflet-control-zoom a {
+  color: var(--brand);
+}
+
+.leaflet-marker-shell {
+  background: transparent;
+  border: 0;
+}
+
+.leaflet-pill-marker,
+.leaflet-user-marker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  box-shadow: 0 10px 20px rgba(72, 42, 24, 0.16);
+  border: 1px solid rgba(106, 65, 42, 0.16);
+  white-space: nowrap;
+}
+
+.leaflet-pill-marker {
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--brand);
+}
+
+.leaflet-pill-marker.selected {
+  background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+  color: white;
+}
+
+.leaflet-user-marker {
+  background: linear-gradient(135deg, var(--olive), #5c6941);
+  color: white;
+}
+
+.leaflet-pill-marker::before,
+.leaflet-user-marker::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.leaflet-pill-marker::before {
+  background: #d45838;
+  box-shadow: 0 0 0 5px rgba(212, 88, 56, 0.16);
+}
+
+.leaflet-pill-marker.selected::before,
+.leaflet-user-marker::before {
+  background: white;
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.18);
 }
 
 .lounge-tabs {
@@ -568,64 +638,6 @@ textarea:focus {
 .lounge-tabs button.active {
   background: linear-gradient(135deg, var(--brand), var(--brand-strong));
   color: white;
-}
-
-.map-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(106, 65, 42, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(106, 65, 42, 0.08) 1px, transparent 1px);
-  background-size: 44px 44px;
-}
-
-.map-pin {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  border: 0;
-  background: transparent;
-  padding: 0;
-}
-
-.map-pin span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 150px;
-  padding: 9px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(106, 65, 42, 0.16);
-  box-shadow: 0 10px 20px rgba(72, 42, 24, 0.12);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 0.76rem;
-  font-weight: 700;
-}
-
-.map-pin span::before {
-  content: "";
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  background: #d45838;
-  box-shadow: 0 0 0 5px rgba(212, 88, 56, 0.16);
-}
-
-.map-pin.active span {
-  background: linear-gradient(135deg, var(--brand), var(--brand-strong));
-  color: white;
-}
-
-.map-pin.user span {
-  background: linear-gradient(135deg, var(--olive), #5c6941);
-  color: white;
-}
-
-.map-pin.user span::before {
-  background: white;
-  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.18);
 }
 
 .card-list {
