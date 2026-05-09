@@ -42,9 +42,6 @@ const localCommunityFallbackStorageKey = "brewspot-web-local-community-posts";
 const localHomeBaristaFallbackStorageKey = "brewspot-web-local-homebarista-posts";
 
 type LocationAccessState = "prompt" | "granted" | "denied" | "unsupported";
-type NearbyRadiusOption = 0 | 1 | 3 | 5;
-
-const nearbyRadiusOptions: NearbyRadiusOption[] = [0, 1, 3, 5];
 
 function buildPublicPageHref(path: string) {
   if (typeof window === "undefined") {
@@ -306,7 +303,6 @@ export default function App() {
   const [nickname, setNickname] = useState("");
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("전체");
-  const [selectedCity, setSelectedCity] = useState("전체");
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [selectedCafeId, setSelectedCafeId] = useState("");
   const [reviewsByCafe, setReviewsByCafe] = useState<Record<string, CafeReview[]>>({});
@@ -332,7 +328,6 @@ export default function App() {
   const [isLocationRefreshing, setIsLocationRefreshing] = useState(false);
   const [lastLocationRefreshAt, setLastLocationRefreshAt] = useState<number | null>(null);
   const [locationErrorMessage, setLocationErrorMessage] = useState<string | null>(null);
-  const [nearbyRadiusKm, setNearbyRadiusKm] = useState<NearbyRadiusOption>(0);
   const [communitySearchText, setCommunitySearchText] = useState("");
   const [communityCategory, setCommunityCategory] = useState("전체");
   const [communityComposerOpen, setCommunityComposerOpen] = useState(false);
@@ -349,6 +344,7 @@ export default function App() {
   const [brewNoteDraft, setBrewNoteDraft] = useState("");
   const [rankingMode, setRankingMode] = useState<RankingMode>("overall");
   const [rankingCity, setRankingCity] = useState("전체");
+  const locationWatchIdRef = useRef<number | null>(null);
 
   const deferredSearchText = useDeferredValue(searchText.trim().toLowerCase());
   const deferredCommunitySearchText = useDeferredValue(
@@ -582,9 +578,62 @@ export default function App() {
     }
   }, [cafes.length, currentLocation, locationAccessState]);
 
-  const categories = ["전체", ...Array.from(new Set(cafes.map((cafe) => cafe.category)))];
-  const cities = ["전체", ...Array.from(new Set(cafes.map((cafe) => cafe.city)))];
+  useEffect(() => {
+    if (typeof window === "undefined" || locationAccessState !== "granted") {
+      return;
+    }
 
+    if (!("geolocation" in navigator)) {
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const nextLocation: BrowserLocation = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          timestamp: position.timestamp
+        };
+
+        setCurrentLocation(nextLocation);
+        setLastLocationRefreshAt(Date.now());
+        setLocationErrorMessage(null);
+        setIsLocationRefreshing(false);
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationAccessState("denied");
+          setCurrentLocation(null);
+          setLocationErrorMessage("브라우저 설정에서 위치 권한을 다시 허용해 주세요.");
+          return;
+        }
+
+        setIsLocationRefreshing(false);
+        setLocationErrorMessage(
+          error.code === error.TIMEOUT
+            ? "위치 확인이 지연돼서 마지막 위치를 유지하고 있어요."
+            : "위치 신호가 약해서 마지막 확인 위치를 유지하고 있어요."
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 1000
+      }
+    );
+
+    locationWatchIdRef.current = watchId;
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+      if (locationWatchIdRef.current === watchId) {
+        locationWatchIdRef.current = null;
+      }
+    };
+  }, [locationAccessState]);
+
+  const categories = ["전체", ...Array.from(new Set(cafes.map((cafe) => cafe.category)))];
   const filteredCafes = cafes
     .filter((cafe) => {
       const matchesSearch =
@@ -602,18 +651,8 @@ export default function App() {
           .includes(deferredSearchText);
 
       const matchesCategory = selectedCategory === "전체" || cafe.category === selectedCategory;
-      const matchesCity = selectedCity === "전체" || cafe.city === selectedCity;
-      const matchesRadius =
-        !currentLocation ||
-        nearbyRadiusKm === 0 ||
-        calculateDistanceInMeters(
-          currentLocation.latitude,
-          currentLocation.longitude,
-          cafe.latitude,
-          cafe.longitude
-        ) <= nearbyRadiusKm * 1000;
 
-      return matchesSearch && matchesCategory && matchesCity && matchesRadius;
+      return matchesSearch && matchesCategory;
     })
     .sort((left, right) => {
       if (!currentLocation) {
@@ -821,15 +860,21 @@ export default function App() {
           error.code === error.PERMISSION_DENIED
             ? "브라우저에서 위치 권한이 거부되어 있어요."
             : error.code === error.POSITION_UNAVAILABLE
-              ? "현재 위치를 아직 찾지 못했어요. 잠시 후 다시 시도해 주세요."
+              ? currentLocation
+                ? "위치 신호가 약해서 마지막 확인 위치를 유지하고 있어요."
+                : "현재 위치를 아직 찾지 못했어요. 잠시 후 다시 시도해 주세요."
               : error.code === error.TIMEOUT
-                ? "위치 확인 시간이 초과됐어요. 다시 시도해 주세요."
+                ? currentLocation
+                  ? "위치 확인이 지연돼서 마지막 위치를 유지하고 있어요."
+                  : "위치 확인 시간이 초과됐어요. 다시 시도해 주세요."
                 : "현재 위치를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";
 
         setLocationAccessState((current) =>
           error.code === error.PERMISSION_DENIED ? "denied" : current
         );
-        setCurrentLocation(null);
+        if (error.code === error.PERMISSION_DENIED) {
+          setCurrentLocation(null);
+        }
         setIsLocationRefreshing(false);
         setLocationErrorMessage(nextMessage);
 
@@ -1188,7 +1233,6 @@ export default function App() {
                 <HomePage
                   bookmarkIds={bookmarkIds}
                   categories={categories}
-                  cities={cities}
                   currentLocation={currentLocation}
                   currentPlaceSummary={currentPlaceSummary}
                   currentUser={currentUser}
@@ -1203,17 +1247,13 @@ export default function App() {
                   nearestVisibleCafe={nearestFilteredCafe}
                   onBookmarkToggle={handleBookmarkToggle}
                   onCategoryChange={setSelectedCategory}
-                  onCityChange={setSelectedCity}
                   onOpenCafe={openCafe}
-                  onRadiusChange={setNearbyRadiusKm}
                   onRefreshLocation={() =>
                     requestCurrentLocation({ incrementCount: false, announce: true })
                   }
-                  nearbyRadiusKm={nearbyRadiusKm}
                   onSearchChange={setSearchText}
                   searchText={searchText}
                   selectedCategory={selectedCategory}
-                  selectedCity={selectedCity}
                   selectedCafeId={selectedCafeId}
                 />
               ) : null}
@@ -1454,7 +1494,12 @@ function LiveCafeMap(props: {
     const map = L.map(containerRef.current, {
       zoomControl: false,
       attributionControl: true,
-      scrollWheelZoom: false
+      scrollWheelZoom: true,
+      doubleClickZoom: true,
+      touchZoom: true,
+      dragging: true,
+      zoomAnimation: true,
+      fadeAnimation: true
     });
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -1555,7 +1600,6 @@ function LiveCafeMap(props: {
 function HomePage(props: {
   bookmarkIds: string[];
   categories: string[];
-  cities: string[];
   currentLocation: BrowserLocation | null;
   currentPlaceSummary: string | null;
   currentUser: AppUser | null;
@@ -1570,21 +1614,16 @@ function HomePage(props: {
   nearestVisibleCafe: Cafe | null;
   onBookmarkToggle: (cafeId: string) => Promise<void>;
   onCategoryChange: (value: string) => void;
-  onCityChange: (value: string) => void;
   onOpenCafe: (cafeId: string) => void;
-  onRadiusChange: (value: NearbyRadiusOption) => void;
   onRefreshLocation: () => void;
   onSearchChange: (value: string) => void;
-  nearbyRadiusKm: NearbyRadiusOption;
   searchText: string;
   selectedCategory: string;
-  selectedCity: string;
   selectedCafeId: string;
 }) {
   const {
     bookmarkIds,
     categories,
-    cities,
     currentLocation,
     currentPlaceSummary,
     currentUser,
@@ -1599,15 +1638,11 @@ function HomePage(props: {
     nearestVisibleCafe,
     onBookmarkToggle,
     onCategoryChange,
-    onCityChange,
     onOpenCafe,
-    onRadiusChange,
     onRefreshLocation,
-    nearbyRadiusKm,
     onSearchChange,
     searchText,
     selectedCategory,
-    selectedCity,
     selectedCafeId
   } = props;
 
@@ -1649,39 +1684,6 @@ function HomePage(props: {
               </button>
             ))}
           </div>
-        </div>
-
-        <div className="chip-section">
-          <p className="section-caption">지역</p>
-          <div className="chip-scroll">
-            {cities.map((city) => (
-              <button className={selectedCity === city ? "filter-chip active" : "filter-chip"} key={city} onClick={() => onCityChange(city)} type="button">
-                {city}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="chip-section">
-          <p className="section-caption">내 주변 반경</p>
-          <div className="chip-scroll">
-            {nearbyRadiusOptions.map((radius) => (
-              <button
-                className={nearbyRadiusKm === radius ? "filter-chip active" : "filter-chip"}
-                disabled={!currentLocation && radius !== 0}
-                key={radius}
-                onClick={() => onRadiusChange(radius)}
-                type="button"
-              >
-                {radius === 0 ? "전체" : `${radius}km`}
-              </button>
-            ))}
-          </div>
-          <p className="helper-text">
-            {currentLocation
-              ? `${nearbyRadiusKm === 0 ? "전체 지역" : `${nearbyRadiusKm}km 반경`} 기준으로 주변 카페를 보고 있어요.`
-              : "위치 권한을 허용하면 1km, 3km, 5km 반경만 따로 볼 수 있어요."}
-          </p>
         </div>
       </section>
 
