@@ -41,6 +41,27 @@ const localCommunityFallbackStorageKey = "brewspot-web-local-community-posts";
 const localHomeBaristaFallbackStorageKey = "brewspot-web-local-homebarista-posts";
 
 type LocationAccessState = "prompt" | "granted" | "denied" | "unsupported";
+
+const publicInfoLinks = [
+  {
+    href: `${import.meta.env.BASE_URL}privacy-policy.html`,
+    label: "개인정보 / 보안",
+    eyebrow: "Privacy",
+    description: "개인정보 처리, 위치정보 안내, 보안 대응 기준을 확인할 수 있어요."
+  },
+  {
+    href: `${import.meta.env.BASE_URL}terms.html`,
+    label: "이용약관",
+    eyebrow: "Terms",
+    description: "서비스 이용 조건과 계정, 콘텐츠 운영 기준을 안내합니다."
+  },
+  {
+    href: `${import.meta.env.BASE_URL}support.html`,
+    label: "고객지원",
+    eyebrow: "Support",
+    description: "문의 방법과 운영 연락처, 추가 안내 링크를 확인할 수 있어요."
+  }
+] as const;
 type BrowserLocation = {
   latitude: number;
   longitude: number;
@@ -2125,6 +2146,24 @@ function ProfilePage(props: {
         <div className="stat-tile">
           <span>남긴 리뷰</span>
           <strong>{totalReviewCount}</strong>
+        </div>
+      </section>
+
+      <section className="panel-card">
+        <div className="section-head">
+          <div>
+            <p className="section-caption">안내 링크</p>
+            <h3>운영 / 보안 정보</h3>
+          </div>
+        </div>
+        <div className="resource-links">
+          {publicInfoLinks.map((link) => (
+            <a className="resource-link-card" href={link.href} key={link.href} rel="noreferrer" target="_blank">
+              <span className="mini-label">{link.eyebrow}</span>
+              <strong>{link.label}</strong>
+              <p>{link.description}</p>
+            </a>
+          ))}
         </div>
       </section>
 
