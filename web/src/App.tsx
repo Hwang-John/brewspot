@@ -1,12 +1,22 @@
-import { FormEvent, startTransition, useDeferredValue, useEffect, useState } from "react";
+import { FormEvent, startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
 
-import { demoCafes, demoReviews, demoUser } from "./lib/demoData";
+import {
+  demoCafes,
+  demoCommunityPosts,
+  demoHomeBaristaPosts,
+  demoReviews,
+  demoUser
+} from "./lib/demoData";
 import {
   addBookmark,
+  addCommunityPost,
+  addHomeBaristaPost,
   addReview,
   fetchBookmarks,
   fetchCafes,
+  fetchCommunityPosts,
   fetchCurrentUserProfile,
+  fetchHomeBaristaPosts,
   fetchReviews,
   hasSupabaseEnv,
   removeBookmark,
@@ -14,10 +24,21 @@ import {
   signOutCurrentUser,
   signUpWithEmail
 } from "./lib/supabase";
-import type { AppUser, AuthIntent, Cafe, CafeReview } from "./types";
+import type {
+  AppUser,
+  AuthIntent,
+  Cafe,
+  CafeReview,
+  CommunityPost,
+  HomeBaristaPost
+} from "./types";
 
 const demoBookmarksStorageKey = "brewspot-web-demo-bookmarks";
 const demoReviewsStorageKey = "brewspot-web-demo-reviews";
+const demoCommunityStorageKey = "brewspot-web-demo-community-posts";
+const demoHomeBaristaStorageKey = "brewspot-web-demo-homebarista-posts";
+const localCommunityFallbackStorageKey = "brewspot-web-local-community-posts";
+const localHomeBaristaFallbackStorageKey = "brewspot-web-local-homebarista-posts";
 
 type LocationAccessState = "prompt" | "granted" | "denied" | "unsupported";
 type BrowserLocation = {
@@ -27,9 +48,14 @@ type BrowserLocation = {
   timestamp: number;
 };
 
+type RankingMode = "overall" | "rating" | "reviews" | "nearby";
+
 type AppRoute =
   | { name: "login" }
   | { name: "home" }
+  | { name: "community" }
+  | { name: "ranking" }
+  | { name: "homebarista" }
   | { name: "saved" }
   | { name: "profile" }
   | { name: "cafe"; cafeId: string };
@@ -45,6 +71,12 @@ function parseHash(hash: string): AppRoute {
   switch (parts[0]) {
     case "home":
       return { name: "home" };
+    case "community":
+      return { name: "community" };
+    case "ranking":
+      return { name: "ranking" };
+    case "homebarista":
+      return { name: "homebarista" };
     case "saved":
       return { name: "saved" };
     case "profile":
@@ -59,6 +91,12 @@ function buildHash(route: AppRoute) {
   switch (route.name) {
     case "home":
       return "#/home";
+    case "community":
+      return "#/community";
+    case "ranking":
+      return "#/ranking";
+    case "homebarista":
+      return "#/homebarista";
     case "saved":
       return "#/saved";
     case "profile":
@@ -84,42 +122,38 @@ function formatRelativeDate(value: string) {
   return formatter.format(Math.round(diffHours / 24), "day");
 }
 
-function loadStoredDemoBookmarks() {
-  const saved = window.localStorage.getItem(demoBookmarksStorageKey);
+function loadStoredStringArray(key: string, fallback: string[]) {
+  const saved = window.localStorage.getItem(key);
 
   if (!saved) {
-    return [demoCafes[0]?.id ?? "", demoCafes[2]?.id ?? ""].filter(Boolean);
+    return fallback;
   }
 
   try {
     const parsed = JSON.parse(saved);
-    return Array.isArray(parsed) ? parsed.filter((value) => typeof value === "string") : [];
+    return Array.isArray(parsed) ? parsed.filter((value) => typeof value === "string") : fallback;
   } catch {
-    return [];
+    return fallback;
   }
 }
 
-function loadStoredDemoReviews() {
-  const saved = window.localStorage.getItem(demoReviewsStorageKey);
+function loadStoredObjectArray<T>(key: string, fallback: T[]) {
+  const saved = window.localStorage.getItem(key);
 
   if (!saved) {
-    return demoReviews;
+    return fallback;
   }
 
   try {
     const parsed = JSON.parse(saved);
-    return Array.isArray(parsed) ? (parsed as CafeReview[]) : demoReviews;
+    return Array.isArray(parsed) ? (parsed as T[]) : fallback;
   } catch {
-    return demoReviews;
+    return fallback;
   }
 }
 
-function persistDemoBookmarks(bookmarkIds: string[]) {
-  window.localStorage.setItem(demoBookmarksStorageKey, JSON.stringify(bookmarkIds));
-}
-
-function persistDemoReviews(reviews: CafeReview[]) {
-  window.localStorage.setItem(demoReviewsStorageKey, JSON.stringify(reviews));
+function persistValue(key: string, value: unknown) {
+  window.localStorage.setItem(key, JSON.stringify(value));
 }
 
 function formatDistance(distanceInMeters: number) {
@@ -234,6 +268,23 @@ function formatRefreshTime(timestamp: number | null) {
   });
 }
 
+function mergeById<T extends { id: string }>(localItems: T[], baseItems: T[]) {
+  const dedupedBase = baseItems.filter(
+    (baseItem) => !localItems.some((localItem) => localItem.id === baseItem.id)
+  );
+
+  return [...localItems, ...dedupedBase];
+}
+
+function previewText(content: string, length: number) {
+  const trimmed = content.trim();
+  if (trimmed.length <= length) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, length)}...`;
+}
+
 export default function App() {
   const [route, setRoute] = useState<AppRoute>(() =>
     typeof window === "undefined" ? { name: "login" } : parseHash(window.location.hash)
@@ -249,14 +300,18 @@ export default function App() {
   const [selectedCafeId, setSelectedCafeId] = useState("");
   const [reviewsByCafe, setReviewsByCafe] = useState<Record<string, CafeReview[]>>({});
   const [bookmarkIds, setBookmarkIds] = useState<string[]>([]);
+  const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
+  const [homeBaristaPosts, setHomeBaristaPosts] = useState<HomeBaristaPost[]>([]);
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [statusMessage, setStatusMessage] = useState(
-    "모바일 웹 버전으로 구조를 다시 정리하고 있어요."
+    "모바일 웹 버전에 커뮤니티, 랭킹, 홈바리스타 페이지를 확장하고 있어요."
   );
   const [isBooting, setIsBooting] = useState(true);
   const [isAuthBusy, setIsAuthBusy] = useState(false);
   const [isBookmarkBusy, setIsBookmarkBusy] = useState(false);
   const [isReviewBusy, setIsReviewBusy] = useState(false);
+  const [isCommunityBusy, setIsCommunityBusy] = useState(false);
+  const [isHomeBaristaBusy, setIsHomeBaristaBusy] = useState(false);
   const [reviewDraft, setReviewDraft] = useState("");
   const [recommendedMenuDraft, setRecommendedMenuDraft] = useState("");
   const [ratingDraft, setRatingDraft] = useState(5);
@@ -266,8 +321,27 @@ export default function App() {
   const [isLocationRefreshing, setIsLocationRefreshing] = useState(false);
   const [lastLocationRefreshAt, setLastLocationRefreshAt] = useState<number | null>(null);
   const [locationErrorMessage, setLocationErrorMessage] = useState<string | null>(null);
+  const [communitySearchText, setCommunitySearchText] = useState("");
+  const [communityCategory, setCommunityCategory] = useState("전체");
+  const [communityComposerOpen, setCommunityComposerOpen] = useState(false);
+  const [communityTitleDraft, setCommunityTitleDraft] = useState("");
+  const [communityContentDraft, setCommunityContentDraft] = useState("");
+  const [communityCityDraft, setCommunityCityDraft] = useState("성수");
+  const [homeBaristaMethod, setHomeBaristaMethod] = useState("전체");
+  const [homeBaristaComposerOpen, setHomeBaristaComposerOpen] = useState(false);
+  const [brewMethodDraft, setBrewMethodDraft] = useState("V60");
+  const [brewTitleDraft, setBrewTitleDraft] = useState("");
+  const [beanNameDraft, setBeanNameDraft] = useState("");
+  const [ratioNoteDraft, setRatioNoteDraft] = useState("");
+  const [tastingNoteDraft, setTastingNoteDraft] = useState("");
+  const [brewNoteDraft, setBrewNoteDraft] = useState("");
+  const [rankingMode, setRankingMode] = useState<RankingMode>("overall");
+  const [rankingCity, setRankingCity] = useState("전체");
 
   const deferredSearchText = useDeferredValue(searchText.trim().toLowerCase());
+  const deferredCommunitySearchText = useDeferredValue(
+    communitySearchText.trim().toLowerCase()
+  );
   const isDemoMode = !hasSupabaseEnv;
 
   useEffect(() => {
@@ -275,10 +349,7 @@ export default function App() {
       return;
     }
 
-    const handleHashChange = () => {
-      setRoute(parseHash(window.location.hash));
-    };
-
+    const handleHashChange = () => setRoute(parseHash(window.location.hash));
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
@@ -300,17 +371,28 @@ export default function App() {
   useEffect(() => {
     async function boot() {
       if (isDemoMode) {
-        const demoReviewList = loadStoredDemoReviews();
+        const demoReviewList = loadStoredObjectArray<CafeReview>(demoReviewsStorageKey, demoReviews);
         const groupedReviews = demoReviewList.reduce<Record<string, CafeReview[]>>((result, review) => {
           result[review.cafeId] = [...(result[review.cafeId] ?? []), review];
           return result;
         }, {});
 
         setCafes(demoCafes);
-        setBookmarkIds(loadStoredDemoBookmarks());
+        setBookmarkIds(
+          loadStoredStringArray(demoBookmarksStorageKey, [
+            demoCafes[0]?.id ?? "",
+            demoCafes[2]?.id ?? ""
+          ].filter(Boolean))
+        );
         setReviewsByCafe(groupedReviews);
+        setCommunityPosts(
+          loadStoredObjectArray<CommunityPost>(demoCommunityStorageKey, demoCommunityPosts)
+        );
+        setHomeBaristaPosts(
+          loadStoredObjectArray<HomeBaristaPost>(demoHomeBaristaStorageKey, demoHomeBaristaPosts)
+        );
         setSelectedCafeId(demoCafes[0]?.id ?? "");
-        setStatusMessage("데모 데이터로 모바일 웹앱 구조를 확인할 수 있어요.");
+        setStatusMessage("데모 데이터로 모바일 웹앱 전체 흐름을 확인할 수 있어요.");
         setIsBooting(false);
         return;
       }
@@ -326,9 +408,35 @@ export default function App() {
         setCurrentUser(profile);
         setBookmarkIds(loadedBookmarks);
         setSelectedCafeId(loadedCafes[0]?.id ?? "");
-        setStatusMessage("Supabase와 연결되었어요. 모바일 웹 흐름으로 이어서 볼 수 있습니다.");
+
+        const storedLocalCommunity = loadStoredObjectArray<CommunityPost>(
+          localCommunityFallbackStorageKey,
+          []
+        );
+        const storedLocalHomeBarista = loadStoredObjectArray<HomeBaristaPost>(
+          localHomeBaristaFallbackStorageKey,
+          []
+        );
+
+        try {
+          const remoteCommunity = await fetchCommunityPosts();
+          setCommunityPosts(mergeById(storedLocalCommunity, remoteCommunity));
+        } catch {
+          setCommunityPosts(mergeById(storedLocalCommunity, demoCommunityPosts));
+        }
+
+        try {
+          const remoteHomeBarista = await fetchHomeBaristaPosts();
+          setHomeBaristaPosts(mergeById(storedLocalHomeBarista, remoteHomeBarista));
+        } catch {
+          setHomeBaristaPosts(mergeById(storedLocalHomeBarista, demoHomeBaristaPosts));
+        }
+
+        setStatusMessage("Supabase와 연결되었어요. 모바일 웹 페이지 구조로 이어서 볼 수 있습니다.");
       } catch (error) {
-        setStatusMessage(getErrorMessage(error, "Supabase 연결에 실패해서 현재 화면을 불러오지 못했어요."));
+        setStatusMessage(
+          getErrorMessage(error, "Supabase 연결에 실패해서 현재 화면을 불러오지 못했어요.")
+        );
       } finally {
         setIsBooting(false);
       }
@@ -367,7 +475,6 @@ export default function App() {
     async function loadReviews() {
       try {
         const loadedReviews = await fetchReviews(selectedCafeId);
-
         if (!cancelled) {
           setReviewsByCafe((current) => ({
             ...current,
@@ -382,7 +489,6 @@ export default function App() {
     }
 
     void loadReviews();
-
     return () => {
       cancelled = true;
     };
@@ -452,10 +558,22 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (route.name === "cafe") {
+      setSelectedCafeId(route.cafeId);
+    }
+  }, [route]);
+
+  useEffect(() => {
+    if (locationAccessState === "granted" && !currentLocation && cafes.length > 0) {
+      requestCurrentLocation({ incrementCount: false, announce: false });
+    }
+  }, [cafes.length, currentLocation, locationAccessState]);
+
   const categories = ["전체", ...Array.from(new Set(cafes.map((cafe) => cafe.category)))];
   const cities = ["전체", ...Array.from(new Set(cafes.map((cafe) => cafe.city)))];
 
-  const visibleCafes = cafes.filter((cafe) => {
+  const filteredCafes = cafes.filter((cafe) => {
     const matchesSearch =
       !deferredSearchText ||
       [
@@ -472,65 +590,122 @@ export default function App() {
 
     const matchesCategory = selectedCategory === "전체" || cafe.category === selectedCategory;
     const matchesCity = selectedCity === "전체" || cafe.city === selectedCity;
-    const matchesSaved = route.name !== "saved" || bookmarkIds.includes(cafe.id);
 
-    return matchesSearch && matchesCategory && matchesCity && matchesSaved;
+    return matchesSearch && matchesCategory && matchesCity;
   });
 
   const selectedCafe =
     cafes.find((cafe) => cafe.id === selectedCafeId) ??
     (route.name === "cafe" ? cafes.find((cafe) => cafe.id === route.cafeId) ?? null : null);
 
-  const selectedCafeReviews = selectedCafe ? reviewsByCafe[selectedCafe.id] ?? [] : [];
   const savedCafes = cafes.filter((cafe) => bookmarkIds.includes(cafe.id));
+  const selectedCafeReviews = selectedCafe ? reviewsByCafe[selectedCafe.id] ?? [] : [];
   const myReviewCount = Object.values(reviewsByCafe)
     .flat()
     .filter((review) => review.userId === currentUser?.id).length;
-  const nearestVisibleCafe = findNearestCafe(currentLocation, visibleCafes);
+  const nearestFilteredCafe = findNearestCafe(currentLocation, filteredCafes);
   const currentPlaceSummary = currentLocation
-    ? nearestVisibleCafe
-      ? `${nearestVisibleCafe.city} 근처`
+    ? nearestFilteredCafe
+      ? `${nearestFilteredCafe.city} 근처`
       : `${currentLocation.latitude.toFixed(3)}, ${currentLocation.longitude.toFixed(3)}`
     : null;
-  const formattedRefreshTime = formatRefreshTime(lastLocationRefreshAt);
   const locationRefreshText = isLocationRefreshing
     ? "현재 위치를 다시 확인하고 있어요."
     : locationErrorMessage
       ? locationErrorMessage
-      : formattedRefreshTime
-        ? `최근 확인: ${formattedRefreshTime}`
+      : formatRefreshTime(lastLocationRefreshAt)
+        ? `최근 확인: ${formatRefreshTime(lastLocationRefreshAt)}`
         : null;
 
-  useEffect(() => {
-    if (route.name === "cafe") {
-      setSelectedCafeId(route.cafeId);
-    }
-  }, [route]);
+  const communityCategories = useMemo(
+    () => ["전체", ...Array.from(new Set(communityPosts.map((post) => post.category)))],
+    [communityPosts]
+  );
 
-  useEffect(() => {
-    if (route.name === "cafe" && !selectedCafe && cafes.length > 0) {
-      navigate({ name: "home" }, true);
-    }
-  }, [cafes.length, route, selectedCafe]);
+  const filteredCommunityPosts = communityPosts.filter((post) => {
+    const matchesCategory = communityCategory === "전체" || post.category === communityCategory;
+    const matchesSearch =
+      !deferredCommunitySearchText ||
+      [post.title, post.content, post.authorName, post.city]
+        .join(" ")
+        .toLowerCase()
+        .includes(deferredCommunitySearchText);
 
-  useEffect(() => {
-    if (locationAccessState === "granted" && !currentLocation && cafes.length > 0) {
-      requestCurrentLocation({ incrementCount: false, announce: false });
-    }
-  }, [cafes.length, currentLocation, locationAccessState]);
+    return matchesCategory && matchesSearch;
+  });
+
+  const homeBaristaMethods = useMemo(
+    () => ["전체", ...Array.from(new Set(homeBaristaPosts.map((post) => post.brewMethod)))],
+    [homeBaristaPosts]
+  );
+
+  const filteredHomeBaristaPosts = homeBaristaPosts.filter(
+    (post) => homeBaristaMethod === "전체" || post.brewMethod === homeBaristaMethod
+  );
+
+  const rankingCities = ["전체", ...Array.from(new Set(cafes.map((cafe) => cafe.city)))];
+  const rankingCandidates = cafes.filter(
+    (cafe) => rankingCity === "전체" || cafe.city === rankingCity
+  );
+
+  const rankingEntries = rankingCandidates
+    .slice()
+    .sort((left, right) => {
+      if (rankingMode === "rating") {
+        return right.rating - left.rating || right.reviewCount - left.reviewCount;
+      }
+
+      if (rankingMode === "reviews") {
+        return right.reviewCount - left.reviewCount || right.rating - left.rating;
+      }
+
+      if (rankingMode === "nearby") {
+        const leftDistance = currentLocation
+          ? calculateDistanceInMeters(
+              currentLocation.latitude,
+              currentLocation.longitude,
+              left.latitude,
+              left.longitude
+            )
+          : Number.POSITIVE_INFINITY;
+        const rightDistance = currentLocation
+          ? calculateDistanceInMeters(
+              currentLocation.latitude,
+              currentLocation.longitude,
+              right.latitude,
+              right.longitude
+            )
+          : Number.POSITIVE_INFINITY;
+
+        return leftDistance - rightDistance;
+      }
+
+      const leftScore = left.rating * 10 + left.reviewCount * 0.6;
+      const rightScore = right.rating * 10 + right.reviewCount * 0.6;
+      return rightScore - leftScore;
+    })
+    .slice(0, 10)
+    .map((cafe, index) => ({
+      rank: index + 1,
+      cafe,
+      highlight:
+        rankingMode === "reviews"
+          ? `리뷰 ${cafe.reviewCount}개`
+          : rankingMode === "nearby"
+            ? currentLocation
+              ? getDistanceTextForLocation(currentLocation, cafe)
+              : "위치 미확인"
+            : `평점 ${cafe.rating.toFixed(1)}`,
+      detail: `${cafe.city} · ${cafe.category} · ${cafe.signatureMenu}`
+    }));
 
   function getDistanceText(cafe: Cafe) {
-    if (!currentLocation) {
-      return null;
-    }
+    return currentLocation ? getDistanceTextForLocation(currentLocation, cafe) : null;
+  }
 
+  function getDistanceTextForLocation(location: BrowserLocation, cafe: Cafe) {
     return formatDistance(
-      calculateDistanceInMeters(
-        currentLocation.latitude,
-        currentLocation.longitude,
-        cafe.latitude,
-        cafe.longitude
-      )
+      calculateDistanceInMeters(location.latitude, location.longitude, cafe.latitude, cafe.longitude)
     );
   }
 
@@ -622,20 +797,6 @@ export default function App() {
     setStatusMessage(nextMessage);
   }
 
-  function getLocationButtonLabel() {
-    switch (locationAccessState) {
-      case "granted":
-        return "내 위치 사용 중";
-      case "denied":
-        return "브라우저 설정 확인";
-      case "unsupported":
-        return "위치 미지원";
-      case "prompt":
-      default:
-        return "위치 권한 요청";
-    }
-  }
-
   function openCafe(cafeId: string) {
     setSelectedCafeId(cafeId);
     navigate({ name: "cafe", cafeId });
@@ -652,7 +813,7 @@ export default function App() {
           nickname: nickname.trim() || demoUser.nickname,
           email: email.trim() || demoUser.email
         });
-        setStatusMessage("데모 계정으로 로그인했어요. 모바일 흐름을 바로 확인할 수 있습니다.");
+        setStatusMessage("데모 계정으로 로그인했어요. 전체 웹 흐름을 바로 둘러볼 수 있습니다.");
         navigate({ name: "home" }, true);
         return;
       }
@@ -680,7 +841,7 @@ export default function App() {
     try {
       if (isDemoMode) {
         setCurrentUser(null);
-        setStatusMessage("데모 로그아웃 상태예요. 다시 로그인하면 이어서 확인할 수 있어요.");
+        setStatusMessage("데모 로그아웃 상태예요.");
         navigate({ name: "login" }, true);
         return;
       }
@@ -711,9 +872,8 @@ export default function App() {
         const next = isSaved
           ? bookmarkIds.filter((id) => id !== cafeId)
           : [cafeId, ...bookmarkIds];
-
         setBookmarkIds(next);
-        persistDemoBookmarks(next);
+        persistValue(demoBookmarksStorageKey, next);
       } else if (isSaved) {
         await removeBookmark(cafeId);
         setBookmarkIds((current) => current.filter((id) => id !== cafeId));
@@ -753,14 +913,12 @@ export default function App() {
           createdAt: new Date().toISOString()
         };
 
-        const nextGroup = [nextReview, ...(reviewsByCafe[selectedCafe.id] ?? [])];
         const nextReviewMap = {
           ...reviewsByCafe,
-          [selectedCafe.id]: nextGroup
+          [selectedCafe.id]: [nextReview, ...(reviewsByCafe[selectedCafe.id] ?? [])]
         };
-
         setReviewsByCafe(nextReviewMap);
-        persistDemoReviews(Object.values(nextReviewMap).flat());
+        persistValue(demoReviewsStorageKey, Object.values(nextReviewMap).flat());
       } else {
         const createdReview = await addReview({
           cafeId: selectedCafe.id,
@@ -787,8 +945,133 @@ export default function App() {
     }
   }
 
+  async function handleCommunitySubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!currentUser) {
+      setStatusMessage("글을 남기려면 먼저 로그인해 주세요.");
+      return;
+    }
+
+    setIsCommunityBusy(true);
+
+    const fallbackPost: CommunityPost = {
+      id: `community-${crypto.randomUUID()}`,
+      authorId: currentUser.id,
+      authorName: currentUser.nickname,
+      category: communityCategory === "전체" ? "자유" : communityCategory,
+      title: communityTitleDraft.trim(),
+      content: communityContentDraft.trim(),
+      city: communityCityDraft.trim() || "동네 미정",
+      likeCount: 0,
+      commentCount: 0,
+      createdAt: new Date().toISOString(),
+      source: isDemoMode ? "sample" : "localFallback"
+    };
+
+    try {
+      if (isDemoMode) {
+        const nextPosts = [fallbackPost, ...communityPosts];
+        setCommunityPosts(nextPosts);
+        persistValue(demoCommunityStorageKey, nextPosts);
+      } else {
+        try {
+          const createdPost = await addCommunityPost({
+            title: communityTitleDraft.trim(),
+            content: communityContentDraft.trim(),
+            category: communityCategory === "전체" ? "자유" : communityCategory,
+            city: communityCityDraft.trim() || "동네 미정",
+            authorNickname: currentUser.nickname
+          });
+          setCommunityPosts((current) => [createdPost, ...current]);
+        } catch {
+          const storedLocal = loadStoredObjectArray<CommunityPost>(
+            localCommunityFallbackStorageKey,
+            []
+          );
+          const nextPosts = [fallbackPost, ...communityPosts];
+          setCommunityPosts(nextPosts);
+          persistValue(localCommunityFallbackStorageKey, [fallbackPost, ...storedLocal]);
+          setStatusMessage("커뮤니티 서버 대신 이 기기에 임시로 저장했어요.");
+        }
+      }
+
+      setCommunityTitleDraft("");
+      setCommunityContentDraft("");
+      setCommunityComposerOpen(false);
+      setStatusMessage("커뮤니티 글을 올렸어요.");
+    } finally {
+      setIsCommunityBusy(false);
+    }
+  }
+
+  async function handleHomeBaristaSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!currentUser) {
+      setStatusMessage("레시피를 공유하려면 먼저 로그인해 주세요.");
+      return;
+    }
+
+    setIsHomeBaristaBusy(true);
+
+    const fallbackPost: HomeBaristaPost = {
+      id: `homebarista-${crypto.randomUUID()}`,
+      authorId: currentUser.id,
+      authorName: currentUser.nickname,
+      brewMethod: brewMethodDraft,
+      title: brewTitleDraft.trim(),
+      beanName: beanNameDraft.trim(),
+      ratioNote: ratioNoteDraft.trim(),
+      tastingNote: tastingNoteDraft.trim(),
+      brewNote: brewNoteDraft.trim(),
+      createdAt: new Date().toISOString(),
+      source: isDemoMode ? "sample" : "localFallback"
+    };
+
+    try {
+      if (isDemoMode) {
+        const nextPosts = [fallbackPost, ...homeBaristaPosts];
+        setHomeBaristaPosts(nextPosts);
+        persistValue(demoHomeBaristaStorageKey, nextPosts);
+      } else {
+        try {
+          const createdPost = await addHomeBaristaPost({
+            brewMethod: brewMethodDraft,
+            title: brewTitleDraft.trim(),
+            beanName: beanNameDraft.trim(),
+            ratioNote: ratioNoteDraft.trim(),
+            tastingNote: tastingNoteDraft.trim(),
+            brewNote: brewNoteDraft.trim(),
+            authorNickname: currentUser.nickname
+          });
+          setHomeBaristaPosts((current) => [createdPost, ...current]);
+        } catch {
+          const storedLocal = loadStoredObjectArray<HomeBaristaPost>(
+            localHomeBaristaFallbackStorageKey,
+            []
+          );
+          const nextPosts = [fallbackPost, ...homeBaristaPosts];
+          setHomeBaristaPosts(nextPosts);
+          persistValue(localHomeBaristaFallbackStorageKey, [fallbackPost, ...storedLocal]);
+          setStatusMessage("홈바리스타 서버 대신 이 기기에 임시로 저장했어요.");
+        }
+      }
+
+      setBrewTitleDraft("");
+      setBeanNameDraft("");
+      setRatioNoteDraft("");
+      setTastingNoteDraft("");
+      setBrewNoteDraft("");
+      setHomeBaristaComposerOpen(false);
+      setStatusMessage("홈바리스타 레시피를 공유했어요.");
+    } finally {
+      setIsHomeBaristaBusy(false);
+    }
+  }
+
   const isAuthenticated = Boolean(currentUser);
-  const mapLayout = buildMapLayout(visibleCafes, currentLocation);
+  const mapLayout = buildMapLayout(filteredCafes, currentLocation);
 
   return (
     <div className="mobile-web">
@@ -815,15 +1098,19 @@ export default function App() {
               route={route}
               selectedCafeName={selectedCafe?.name ?? null}
             />
+
             <div className="screen-content">
               <StatusBanner message={statusMessage} />
 
               {route.name === "home" ? (
                 <HomePage
                   bookmarkIds={bookmarkIds}
+                  categories={categories}
+                  cities={cities}
                   currentLocation={currentLocation}
                   currentPlaceSummary={currentPlaceSummary}
                   currentUser={currentUser}
+                  filteredCafes={filteredCafes}
                   getDistanceText={getDistanceText}
                   handlePrimaryLocationAction={handlePrimaryLocationAction}
                   isBookmarkBusy={isBookmarkBusy}
@@ -833,31 +1120,100 @@ export default function App() {
                   locationRefreshText={locationRefreshText}
                   locationRequestCount={locationRequestCount}
                   mapLayout={mapLayout}
-                  nearestVisibleCafe={nearestVisibleCafe}
+                  nearestVisibleCafe={nearestFilteredCafe}
                   onBookmarkToggle={handleBookmarkToggle}
                   onCategoryChange={setSelectedCategory}
                   onCityChange={setSelectedCity}
                   onOpenCafe={openCafe}
+                  onOpenCommunity={() => navigate({ name: "community" })}
+                  onOpenHomeBarista={() => navigate({ name: "homebarista" })}
+                  onOpenRanking={() => navigate({ name: "ranking" })}
                   onRefreshLocation={() =>
-                    requestCurrentLocation({
-                      incrementCount: false,
-                      announce: true
-                    })
+                    requestCurrentLocation({ incrementCount: false, announce: true })
                   }
                   onSearchChange={setSearchText}
                   searchText={searchText}
                   selectedCategory={selectedCategory}
                   selectedCity={selectedCity}
                   selectedCafeId={selectedCafeId}
-                  visibleCafes={visibleCafes}
-                  categories={categories}
-                  cities={cities}
+                />
+              ) : null}
+
+              {route.name === "community" ? (
+                <CommunityPage
+                  categories={communityCategories}
+                  communityCategory={communityCategory}
+                  communityCityDraft={communityCityDraft}
+                  communityComposerOpen={communityComposerOpen}
+                  communityContentDraft={communityContentDraft}
+                  communityPosts={filteredCommunityPosts}
+                  communitySearchText={communitySearchText}
+                  communityTitleDraft={communityTitleDraft}
+                  isCommunityBusy={isCommunityBusy}
+                  onCategoryChange={setCommunityCategory}
+                  onCityDraftChange={setCommunityCityDraft}
+                  onComposerToggle={() => setCommunityComposerOpen((current) => !current)}
+                  onContentDraftChange={setCommunityContentDraft}
+                  onNavigate={navigate}
+                  onSearchChange={setCommunitySearchText}
+                  onSubmit={handleCommunitySubmit}
+                  onTitleDraftChange={setCommunityTitleDraft}
+                />
+              ) : null}
+
+              {route.name === "ranking" ? (
+                <RankingPage
+                  currentLocation={currentLocation}
+                  onCityChange={setRankingCity}
+                  onModeChange={setRankingMode}
+                  onNavigate={navigate}
+                  onOpenCafe={openCafe}
+                  rankingCity={rankingCity}
+                  rankingEntries={rankingEntries}
+                  rankingMode={rankingMode}
+                  rankingNote={
+                    rankingMode === "overall"
+                      ? "평점과 리뷰 균형"
+                      : rankingMode === "rating"
+                        ? "평점 우선"
+                        : rankingMode === "reviews"
+                          ? "리뷰 수 우선"
+                          : currentLocation
+                            ? "거리 우선"
+                            : "위치 미확인"
+                  }
+                  rankingCities={rankingCities}
+                />
+              ) : null}
+
+              {route.name === "homebarista" ? (
+                <HomeBaristaPage
+                  beanNameDraft={beanNameDraft}
+                  brewMethodDraft={brewMethodDraft}
+                  brewNoteDraft={brewNoteDraft}
+                  composerOpen={homeBaristaComposerOpen}
+                  isBusy={isHomeBaristaBusy}
+                  methodFilter={homeBaristaMethod}
+                  methods={homeBaristaMethods}
+                  onBeanNameDraftChange={setBeanNameDraft}
+                  onBrewMethodDraftChange={setBrewMethodDraft}
+                  onBrewNoteDraftChange={setBrewNoteDraft}
+                  onComposerToggle={() => setHomeBaristaComposerOpen((current) => !current)}
+                  onMethodFilterChange={setHomeBaristaMethod}
+                  onNavigate={navigate}
+                  onRatioDraftChange={setRatioNoteDraft}
+                  onSubmit={handleHomeBaristaSubmit}
+                  onTastingDraftChange={setTastingNoteDraft}
+                  onTitleDraftChange={setBrewTitleDraft}
+                  posts={filteredHomeBaristaPosts}
+                  ratioNoteDraft={ratioNoteDraft}
+                  tastingNoteDraft={tastingNoteDraft}
+                  titleDraft={brewTitleDraft}
                 />
               ) : null}
 
               {route.name === "saved" ? (
                 <SavedPage
-                  bookmarkIds={bookmarkIds}
                   currentUser={currentUser}
                   getDistanceText={getDistanceText}
                   isBookmarkBusy={isBookmarkBusy}
@@ -887,9 +1243,9 @@ export default function App() {
                   isSaved={bookmarkIds.includes(selectedCafe.id)}
                   onBookmarkToggle={() => void handleBookmarkToggle(selectedCafe.id)}
                   onRecommendedMenuChange={setRecommendedMenuDraft}
+                  onRatingChange={setRatingDraft}
                   onReviewSubmit={handleReviewSubmit}
                   onReviewTextChange={setReviewDraft}
-                  onRatingChange={setRatingDraft}
                   ratingDraft={ratingDraft}
                   recommendedMenuDraft={recommendedMenuDraft}
                   reviewDraft={reviewDraft}
@@ -897,6 +1253,7 @@ export default function App() {
                 />
               ) : null}
             </div>
+
             {isAuthenticated ? (
               <BottomNavigation
                 currentRoute={route}
@@ -943,27 +1300,16 @@ function LoginPage(props: {
     <div className="login-screen">
       <div className="login-hero">
         <p className="eyebrow">BrewSpot Mobile Web</p>
-        <h1>내 취향에 맞는 카페를 휴대폰에서 바로 찾아보세요.</h1>
-        <p>
-          로그인 후 홈에서 카페를 탐색하고, 저장하고, 리뷰를 남기는 모바일 웹앱 구조로
-          다시 정리했습니다.
-        </p>
+        <h1>카페 탐색부터 라운지 기능까지 모바일 웹으로 이어집니다.</h1>
+        <p>로그인 후 홈, 저장, 커뮤니티, 랭킹, 홈바리스타 페이지를 각각 따로 이동할 수 있어요.</p>
       </div>
 
       <div className="login-card">
         <div className="segmented-control">
-          <button
-            className={authIntent === "signin" ? "active" : ""}
-            onClick={() => onAuthIntentChange("signin")}
-            type="button"
-          >
+          <button className={authIntent === "signin" ? "active" : ""} onClick={() => onAuthIntentChange("signin")} type="button">
             로그인
           </button>
-          <button
-            className={authIntent === "signup" ? "active" : ""}
-            onClick={() => onAuthIntentChange("signup")}
-            type="button"
-          >
+          <button className={authIntent === "signup" ? "active" : ""} onClick={() => onAuthIntentChange("signup")} type="button">
             회원가입
           </button>
         </div>
@@ -972,30 +1318,16 @@ function LoginPage(props: {
           {authIntent === "signup" ? (
             <label>
               닉네임
-              <input
-                onChange={(event) => setNickname(event.target.value)}
-                placeholder="brew_jane"
-                value={nickname}
-              />
+              <input onChange={(event) => setNickname(event.target.value)} placeholder="brew_jane" value={nickname} />
             </label>
           ) : null}
           <label>
             이메일
-            <input
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="user@example.com"
-              type="email"
-              value={email}
-            />
+            <input onChange={(event) => setEmail(event.target.value)} placeholder="user@example.com" type="email" value={email} />
           </label>
           <label>
             비밀번호
-            <input
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="8자 이상"
-              type="password"
-              value={password}
-            />
+            <input onChange={(event) => setPassword(event.target.value)} placeholder="8자 이상" type="password" value={password} />
           </label>
           <button className="primary-cta" disabled={isAuthBusy} type="submit">
             {isAuthBusy
@@ -1026,6 +1358,7 @@ function HomePage(props: {
   currentLocation: BrowserLocation | null;
   currentPlaceSummary: string | null;
   currentUser: AppUser | null;
+  filteredCafes: Cafe[];
   getDistanceText: (cafe: Cafe) => string | null;
   handlePrimaryLocationAction: () => void;
   isBookmarkBusy: boolean;
@@ -1040,13 +1373,15 @@ function HomePage(props: {
   onCategoryChange: (value: string) => void;
   onCityChange: (value: string) => void;
   onOpenCafe: (cafeId: string) => void;
+  onOpenCommunity: () => void;
+  onOpenHomeBarista: () => void;
+  onOpenRanking: () => void;
   onRefreshLocation: () => void;
   onSearchChange: (value: string) => void;
   searchText: string;
   selectedCategory: string;
   selectedCity: string;
   selectedCafeId: string;
-  visibleCafes: Cafe[];
 }) {
   const {
     bookmarkIds,
@@ -1055,6 +1390,7 @@ function HomePage(props: {
     currentLocation,
     currentPlaceSummary,
     currentUser,
+    filteredCafes,
     getDistanceText,
     handlePrimaryLocationAction,
     isBookmarkBusy,
@@ -1069,13 +1405,15 @@ function HomePage(props: {
     onCategoryChange,
     onCityChange,
     onOpenCafe,
+    onOpenCommunity,
+    onOpenHomeBarista,
+    onOpenRanking,
     onRefreshLocation,
     onSearchChange,
     searchText,
     selectedCategory,
     selectedCity,
-    selectedCafeId,
-    visibleCafes
+    selectedCafeId
   } = props;
 
   return (
@@ -1084,22 +1422,38 @@ function HomePage(props: {
         <div className="hero-row">
           <div>
             <p className="eyebrow">Home</p>
-            <h2>{currentUser ? `${currentUser.nickname}님, 오늘은 어디로 갈까요?` : "오늘의 브루 스팟"}</h2>
+            <h2>{currentUser ? `${currentUser.nickname}님, 오늘은 어디로 갈까요?` : "오늘의 BrewSpot"}</h2>
           </div>
           <span className={`mode-badge ${isDemoMode ? "demo" : "live"}`}>
             {isDemoMode ? "Demo" : "Live"}
           </span>
         </div>
-        <p className="hero-copy">
-          로그인 후 바로 홈으로 들어와, 검색과 탭 이동으로 원하는 카페를 찾는 모바일 흐름입니다.
-        </p>
+        <p className="hero-copy">홈에서 탐색을 시작하고, 버튼으로 라운지 페이지로 이동하는 모바일 구조입니다.</p>
         {nearestVisibleCafe ? (
           <div className="quick-stat-card">
             <span className="mini-label">가장 가까운 카페</span>
             <strong>{nearestVisibleCafe.name}</strong>
-            <p>{getDistanceText(nearestVisibleCafe)} · 지금 보이는 카페 중 가장 가깝습니다.</p>
+            <p>{getDistanceText(nearestVisibleCafe)} · 지금 보고 있는 카페 중 가장 가깝습니다.</p>
           </div>
         ) : null}
+      </section>
+
+      <section className="shortcut-grid">
+        <button className="shortcut-card" onClick={onOpenCommunity} type="button">
+          <span className="mini-label">Brew Talk</span>
+          <strong>커뮤니티</strong>
+          <p>추천, 질문, 동네 이야기를 나누는 페이지</p>
+        </button>
+        <button className="shortcut-card" onClick={onOpenRanking} type="button">
+          <span className="mini-label">Brew Rank</span>
+          <strong>랭킹</strong>
+          <p>평점, 리뷰, 거리 기준으로 카페를 보는 페이지</p>
+        </button>
+        <button className="shortcut-card full" onClick={onOpenHomeBarista} type="button">
+          <span className="mini-label">Home Brew</span>
+          <strong>홈바리스타</strong>
+          <p>집에서 내리는 레시피와 원두 메모를 공유하는 페이지</p>
+        </button>
       </section>
 
       <section className="panel-card">
@@ -1116,12 +1470,7 @@ function HomePage(props: {
           <p className="section-caption">카테고리</p>
           <div className="chip-scroll">
             {categories.map((category) => (
-              <button
-                className={selectedCategory === category ? "filter-chip active" : "filter-chip"}
-                key={category}
-                onClick={() => onCategoryChange(category)}
-                type="button"
-              >
+              <button className={selectedCategory === category ? "filter-chip active" : "filter-chip"} key={category} onClick={() => onCategoryChange(category)} type="button">
                 {category}
               </button>
             ))}
@@ -1132,12 +1481,7 @@ function HomePage(props: {
           <p className="section-caption">지역</p>
           <div className="chip-scroll">
             {cities.map((city) => (
-              <button
-                className={selectedCity === city ? "filter-chip active" : "filter-chip"}
-                key={city}
-                onClick={() => onCityChange(city)}
-                type="button"
-              >
+              <button className={selectedCity === city ? "filter-chip active" : "filter-chip"} key={city} onClick={() => onCityChange(city)} type="button">
                 {city}
               </button>
             ))}
@@ -1201,28 +1545,18 @@ function HomePage(props: {
             <p className="section-caption">탐색 보드</p>
             <h3>한눈에 보는 위치</h3>
           </div>
-          <span className="meta-pill">{visibleCafes.length}곳</span>
+          <span className="meta-pill">{filteredCafes.length}곳</span>
         </div>
 
         <div className="map-board">
           <div className="map-grid" />
           {mapLayout.userPin ? (
-            <button
-              className="map-pin user"
-              style={{ left: `${mapLayout.userPin.left}%`, top: `${mapLayout.userPin.top}%` }}
-              type="button"
-            >
+            <button className="map-pin user" style={{ left: `${mapLayout.userPin.left}%`, top: `${mapLayout.userPin.top}%` }} type="button">
               <span>내 위치</span>
             </button>
           ) : null}
           {mapLayout.cafePins.map(({ cafe, left, top }) => (
-            <button
-              className={selectedCafeId === cafe.id ? "map-pin active" : "map-pin"}
-              key={cafe.id}
-              onClick={() => onOpenCafe(cafe.id)}
-              style={{ left: `${left}%`, top: `${top}%` }}
-              type="button"
-            >
+            <button className={selectedCafeId === cafe.id ? "map-pin active" : "map-pin"} key={cafe.id} onClick={() => onOpenCafe(cafe.id)} style={{ left: `${left}%`, top: `${top}%` }} type="button">
               <span>{cafe.name}</span>
             </button>
           ))}
@@ -1237,14 +1571,11 @@ function HomePage(props: {
           </div>
         </div>
 
-        {visibleCafes.length === 0 ? (
-          <EmptyBlock
-            description="검색어나 필터를 조금 넓혀보면 다른 카페를 다시 볼 수 있어요."
-            title="조건에 맞는 카페가 없어요."
-          />
+        {filteredCafes.length === 0 ? (
+          <EmptyBlock description="검색어나 필터를 조금 넓혀보면 다른 카페를 다시 볼 수 있어요." title="조건에 맞는 카페가 없어요." />
         ) : (
           <div className="card-list">
-            {visibleCafes.map((cafe) => (
+            {filteredCafes.map((cafe) => (
               <CafeListCard
                 cafe={cafe}
                 distanceText={getDistanceText(cafe)}
@@ -1262,8 +1593,359 @@ function HomePage(props: {
   );
 }
 
+function CommunityPage(props: {
+  categories: string[];
+  communityCategory: string;
+  communityCityDraft: string;
+  communityComposerOpen: boolean;
+  communityContentDraft: string;
+  communityPosts: CommunityPost[];
+  communitySearchText: string;
+  communityTitleDraft: string;
+  isCommunityBusy: boolean;
+  onCategoryChange: (value: string) => void;
+  onCityDraftChange: (value: string) => void;
+  onComposerToggle: () => void;
+  onContentDraftChange: (value: string) => void;
+  onNavigate: (route: AppRoute) => void;
+  onSearchChange: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onTitleDraftChange: (value: string) => void;
+}) {
+  const {
+    categories,
+    communityCategory,
+    communityCityDraft,
+    communityComposerOpen,
+    communityContentDraft,
+    communityPosts,
+    communitySearchText,
+    communityTitleDraft,
+    isCommunityBusy,
+    onCategoryChange,
+    onCityDraftChange,
+    onComposerToggle,
+    onContentDraftChange,
+    onNavigate,
+    onSearchChange,
+    onSubmit,
+    onTitleDraftChange
+  } = props;
+
+  return (
+    <div className="page-stack">
+      <LoungeTabs current="community" onNavigate={onNavigate} />
+
+      <section className="hero-panel compact">
+        <p className="eyebrow">Brew Talk</p>
+        <h2>카페 취향을 나누는 게시판</h2>
+        <p className="hero-copy">추천, 질문, 동네 이야기를 모바일 웹 페이지에서 따로 읽고 쓸 수 있어요.</p>
+      </section>
+
+      <section className="panel-card">
+        <label className="field-block">
+          <span>게시글 검색</span>
+          <input onChange={(event) => onSearchChange(event.target.value)} placeholder="제목, 내용, 작성자, 동네 검색" value={communitySearchText} />
+        </label>
+        <div className="chip-scroll">
+          {categories.map((category) => (
+            <button className={communityCategory === category ? "filter-chip active" : "filter-chip"} key={category} onClick={() => onCategoryChange(category)} type="button">
+              {category}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel-card">
+        <div className="section-head">
+          <div>
+            <p className="section-caption">새 글</p>
+            <h3>커뮤니티에 남기기</h3>
+          </div>
+          <button className="secondary-cta compact" onClick={onComposerToggle} type="button">
+            {communityComposerOpen ? "닫기" : "글쓰기"}
+          </button>
+        </div>
+
+        {communityComposerOpen ? (
+          <form className="stack-form" onSubmit={onSubmit}>
+            <label>
+              제목
+              <input onChange={(event) => onTitleDraftChange(event.target.value)} placeholder="성수에서 오래 머물기 좋은 카페 추천해요" value={communityTitleDraft} />
+            </label>
+            <label>
+              내용
+              <textarea onChange={(event) => onContentDraftChange(event.target.value)} placeholder="카페 취향, 동선, 질문을 적어보세요." rows={4} value={communityContentDraft} />
+            </label>
+            <label>
+              동네
+              <input onChange={(event) => onCityDraftChange(event.target.value)} placeholder="성수" value={communityCityDraft} />
+            </label>
+            <button className="primary-cta" disabled={isCommunityBusy || !communityTitleDraft.trim() || !communityContentDraft.trim()} type="submit">
+              {isCommunityBusy ? "올리는 중..." : "게시글 올리기"}
+            </button>
+          </form>
+        ) : (
+          <p className="helper-text">버튼을 누르면 모바일 폼이 열리고, 글을 올린 뒤 목록으로 바로 반영됩니다.</p>
+        )}
+      </section>
+
+      {communityPosts.length === 0 ? (
+        <EmptyBlock description="카테고리를 바꾸거나 검색어를 지우면 다른 게시글 흐름을 다시 볼 수 있어요." title="아직 맞는 게시글이 없어요." />
+      ) : (
+        <div className="card-list">
+          {communityPosts.map((post) => (
+            <article className="post-card" key={post.id}>
+              <div className="card-topline">
+                <div className="chip-wrap">
+                  <span className="city-badge">{post.city}</span>
+                  <span className="ghost-chip">{post.category}</span>
+                  <span className="ghost-chip">{post.source === "remote" ? "Live" : post.source === "localFallback" ? "로컬 저장" : "샘플"}</span>
+                </div>
+                <span className="meta-pill">{formatRelativeDate(post.createdAt)}</span>
+              </div>
+              <h4>{post.title}</h4>
+              <p>{previewText(post.content, 110)}</p>
+              <div className="meta-wrap">
+                <span>{post.authorName}</span>
+                <span>좋아요 {post.likeCount}</span>
+                <span>댓글 {post.commentCount}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RankingPage(props: {
+  currentLocation: BrowserLocation | null;
+  onCityChange: (value: string) => void;
+  onModeChange: (value: RankingMode) => void;
+  onNavigate: (route: AppRoute) => void;
+  onOpenCafe: (cafeId: string) => void;
+  rankingCity: string;
+  rankingCities: string[];
+  rankingEntries: Array<{ rank: number; cafe: Cafe; highlight: string; detail: string }>;
+  rankingMode: RankingMode;
+  rankingNote: string;
+}) {
+  const {
+    currentLocation,
+    onCityChange,
+    onModeChange,
+    onNavigate,
+    onOpenCafe,
+    rankingCity,
+    rankingCities,
+    rankingEntries,
+    rankingMode,
+    rankingNote
+  } = props;
+
+  return (
+    <div className="page-stack">
+      <LoungeTabs current="ranking" onNavigate={onNavigate} />
+
+      <section className="hero-panel compact">
+        <p className="eyebrow">Brew Rank</p>
+        <h2>지금 주목할 카페 랭킹</h2>
+        <p className="hero-copy">평점, 리뷰 수, 현재 위치를 기준으로 페이지 단위로 따로 볼 수 있어요.</p>
+      </section>
+
+      <section className="panel-card">
+        <p className="section-caption">랭킹 모드</p>
+        <div className="chip-scroll">
+          {[
+            { key: "overall", label: "종합" },
+            { key: "rating", label: "평점" },
+            { key: "reviews", label: "리뷰" },
+            { key: "nearby", label: "내 주변" }
+          ].map((mode) => (
+            <button className={rankingMode === mode.key ? "filter-chip active" : "filter-chip"} key={mode.key} onClick={() => onModeChange(mode.key as RankingMode)} type="button">
+              {mode.label}
+            </button>
+          ))}
+        </div>
+
+        <p className="section-caption">지역</p>
+        <div className="chip-scroll">
+          {rankingCities.map((city) => (
+            <button className={rankingCity === city ? "filter-chip active" : "filter-chip"} key={city} onClick={() => onCityChange(city)} type="button">
+              {city}
+            </button>
+          ))}
+        </div>
+
+        <p className="helper-text">
+          {rankingMode === "nearby" && !currentLocation ? "현재 위치를 허용하면 내 주변 랭킹이 더 정확해져요." : rankingNote}
+        </p>
+      </section>
+
+      {rankingEntries.length === 0 ? (
+        <EmptyBlock description="지역 조건을 바꾸거나 카페 데이터가 더 쌓이면 랭킹이 채워집니다." title="랭킹에 표시할 카페가 아직 없어요." />
+      ) : (
+        <div className="card-list">
+          {rankingEntries.map((entry) => (
+            <button className="ranking-card" key={entry.cafe.id} onClick={() => onOpenCafe(entry.cafe.id)} type="button">
+              <div className="ranking-badge">{entry.rank}</div>
+              <div className="ranking-copy">
+                <strong>{entry.cafe.name}</strong>
+                <p>{entry.detail}</p>
+                <span>{entry.highlight}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HomeBaristaPage(props: {
+  beanNameDraft: string;
+  brewMethodDraft: string;
+  brewNoteDraft: string;
+  composerOpen: boolean;
+  isBusy: boolean;
+  methodFilter: string;
+  methods: string[];
+  onBeanNameDraftChange: (value: string) => void;
+  onBrewMethodDraftChange: (value: string) => void;
+  onBrewNoteDraftChange: (value: string) => void;
+  onComposerToggle: () => void;
+  onMethodFilterChange: (value: string) => void;
+  onNavigate: (route: AppRoute) => void;
+  onRatioDraftChange: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onTastingDraftChange: (value: string) => void;
+  onTitleDraftChange: (value: string) => void;
+  posts: HomeBaristaPost[];
+  ratioNoteDraft: string;
+  tastingNoteDraft: string;
+  titleDraft: string;
+}) {
+  const {
+    beanNameDraft,
+    brewMethodDraft,
+    brewNoteDraft,
+    composerOpen,
+    isBusy,
+    methodFilter,
+    methods,
+    onBeanNameDraftChange,
+    onBrewMethodDraftChange,
+    onBrewNoteDraftChange,
+    onComposerToggle,
+    onMethodFilterChange,
+    onNavigate,
+    onRatioDraftChange,
+    onSubmit,
+    onTastingDraftChange,
+    onTitleDraftChange,
+    posts,
+    ratioNoteDraft,
+    tastingNoteDraft,
+    titleDraft
+  } = props;
+
+  return (
+    <div className="page-stack">
+      <LoungeTabs current="homebarista" onNavigate={onNavigate} />
+
+      <section className="hero-panel compact">
+        <p className="eyebrow">Home Brew</p>
+        <h2>집에서도 BrewSpot 취향을 이어가요</h2>
+        <p className="hero-copy">레시피, 추출 메모, 원두 노트를 모바일 화면에서 따로 읽고 쓸 수 있어요.</p>
+      </section>
+
+      <section className="panel-card">
+        <p className="section-caption">추출 방식 필터</p>
+        <div className="chip-scroll">
+          {methods.map((method) => (
+            <button className={methodFilter === method ? "filter-chip active" : "filter-chip"} key={method} onClick={() => onMethodFilterChange(method)} type="button">
+              {method}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel-card">
+        <div className="section-head">
+          <div>
+            <p className="section-caption">새 레시피</p>
+            <h3>홈바리스타에 공유하기</h3>
+          </div>
+          <button className="secondary-cta compact" onClick={onComposerToggle} type="button">
+            {composerOpen ? "닫기" : "레시피 쓰기"}
+          </button>
+        </div>
+
+        {composerOpen ? (
+          <form className="stack-form" onSubmit={onSubmit}>
+            <label>
+              추출 방식
+              <input onChange={(event) => onBrewMethodDraftChange(event.target.value)} placeholder="V60" value={brewMethodDraft} />
+            </label>
+            <label>
+              제목
+              <input onChange={(event) => onTitleDraftChange(event.target.value)} placeholder="성수 블렌드로 가볍게 내리는 아침 레시피" value={titleDraft} />
+            </label>
+            <label>
+              원두 이름
+              <input onChange={(event) => onBeanNameDraftChange(event.target.value)} placeholder="BrewSpot House Blend" value={beanNameDraft} />
+            </label>
+            <label>
+              비율 메모
+              <input onChange={(event) => onRatioDraftChange(event.target.value)} placeholder="15g : 240ml / 2분 30초" value={ratioNoteDraft} />
+            </label>
+            <label>
+              테이스팅 노트
+              <textarea onChange={(event) => onTastingDraftChange(event.target.value)} placeholder="첫 모금의 인상과 식으면서 올라오는 뉘앙스를 적어보세요." rows={3} value={tastingNoteDraft} />
+            </label>
+            <label>
+              추출 메모
+              <textarea onChange={(event) => onBrewNoteDraftChange(event.target.value)} placeholder="붓는 순서, 물줄기, 온도 등을 적어보세요." rows={4} value={brewNoteDraft} />
+            </label>
+            <button className="primary-cta" disabled={isBusy || !titleDraft.trim() || !beanNameDraft.trim() || !tastingNoteDraft.trim() || !brewNoteDraft.trim()} type="submit">
+              {isBusy ? "공유 중..." : "레시피 공유하기"}
+            </button>
+          </form>
+        ) : (
+          <p className="helper-text">버튼을 누르면 모바일 폼이 열리고, 올린 레시피가 피드에 바로 반영됩니다.</p>
+        )}
+      </section>
+
+      {posts.length === 0 ? (
+        <EmptyBlock description="추출 방식을 바꾸거나 첫 레시피를 직접 올려보세요." title="아직 맞는 레시피가 없어요." />
+      ) : (
+        <div className="card-list">
+          {posts.map((post) => (
+            <article className="post-card" key={post.id}>
+              <div className="card-topline">
+                <div className="chip-wrap">
+                  <span className="city-badge">{post.brewMethod}</span>
+                  <span className="ghost-chip">{post.source === "remote" ? "Live" : post.source === "localFallback" ? "로컬 저장" : "샘플"}</span>
+                </div>
+                <span className="meta-pill">{formatRelativeDate(post.createdAt)}</span>
+              </div>
+              <h4>{post.title}</h4>
+              <p>{previewText(post.tastingNote, 96)}</p>
+              <div className="meta-wrap">
+                <span>{post.beanName}</span>
+                <span>{post.ratioNote}</span>
+                <span>{post.authorName}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SavedPage(props: {
-  bookmarkIds: string[];
   currentUser: AppUser | null;
   getDistanceText: (cafe: Cafe) => string | null;
   isBookmarkBusy: boolean;
@@ -1278,14 +1960,11 @@ function SavedPage(props: {
       <section className="hero-panel compact">
         <p className="eyebrow">Saved</p>
         <h2>{currentUser?.nickname ?? "내"}가 저장한 카페</h2>
-        <p className="hero-copy">홈에서 저장한 카페를 모아서 다시 꺼내보는 페이지입니다.</p>
+        <p className="hero-copy">마음에 든 카페를 다시 꺼내보는 별도 페이지입니다.</p>
       </section>
 
       {savedCafes.length === 0 ? (
-        <EmptyBlock
-          description="홈에서 마음에 드는 카페를 저장하면 이 페이지에 차곡차곡 모입니다."
-          title="아직 저장한 카페가 없어요."
-        />
+        <EmptyBlock description="홈에서 마음에 드는 카페를 저장하면 이 페이지에 차곡차곡 모입니다." title="아직 저장한 카페가 없어요." />
       ) : (
         <div className="card-list">
           {savedCafes.map((cafe) => (
@@ -1344,9 +2023,9 @@ function ProfilePage(props: {
           </div>
         </div>
         <ul className="simple-list">
-          <li>커뮤니티 게시판 웹 전환</li>
-          <li>카페 랭킹 페이지 추가</li>
-          <li>홈바리스타 피드 모바일 화면 구성</li>
+          <li>커뮤니티 상세 읽기 페이지</li>
+          <li>랭킹 세부 정렬 고도화</li>
+          <li>홈바리스타 상세 읽기와 저장 기능</li>
         </ul>
       </section>
 
@@ -1455,38 +2134,20 @@ function CafeDetailPage(props: {
         <form className="stack-form" onSubmit={onReviewSubmit}>
           <div className="rating-row">
             {[5, 4, 3, 2, 1].map((value) => (
-              <button
-                className={ratingDraft === value ? "score-pill active" : "score-pill"}
-                key={value}
-                onClick={() => onRatingChange(value)}
-                type="button"
-              >
+              <button className={ratingDraft === value ? "score-pill active" : "score-pill"} key={value} onClick={() => onRatingChange(value)} type="button">
                 ★ {value}
               </button>
             ))}
           </div>
           <label>
             추천 메뉴
-            <input
-              onChange={(event) => onRecommendedMenuChange(event.target.value)}
-              placeholder="플랫화이트, 스콘 플레이트"
-              value={recommendedMenuDraft}
-            />
+            <input onChange={(event) => onRecommendedMenuChange(event.target.value)} placeholder="플랫화이트, 스콘 플레이트" value={recommendedMenuDraft} />
           </label>
           <label>
             방문 메모
-            <textarea
-              onChange={(event) => onReviewTextChange(event.target.value)}
-              placeholder="커피 밸런스, 좌석 분위기, 다시 갈지 등을 적어보세요."
-              rows={4}
-              value={reviewDraft}
-            />
+            <textarea onChange={(event) => onReviewTextChange(event.target.value)} placeholder="커피 밸런스, 좌석 분위기, 다시 갈지 등을 적어보세요." rows={4} value={reviewDraft} />
           </label>
-          <button
-            className="primary-cta"
-            disabled={isReviewBusy || !recommendedMenuDraft.trim() || !reviewDraft.trim()}
-            type="submit"
-          >
+          <button className="primary-cta" disabled={isReviewBusy || !recommendedMenuDraft.trim() || !reviewDraft.trim()} type="submit">
             {isReviewBusy ? "저장 중..." : "리뷰 저장"}
           </button>
         </form>
@@ -1565,6 +2226,27 @@ function CafeListCard(props: {
   );
 }
 
+function LoungeTabs(props: {
+  current: "community" | "ranking" | "homebarista";
+  onNavigate: (route: AppRoute) => void;
+}) {
+  const { current, onNavigate } = props;
+
+  return (
+    <section className="lounge-tabs">
+      <button className={current === "community" ? "active" : ""} onClick={() => onNavigate({ name: "community" })} type="button">
+        커뮤니티
+      </button>
+      <button className={current === "ranking" ? "active" : ""} onClick={() => onNavigate({ name: "ranking" })} type="button">
+        랭킹
+      </button>
+      <button className={current === "homebarista" ? "active" : ""} onClick={() => onNavigate({ name: "homebarista" })} type="button">
+        홈바리스타
+      </button>
+    </section>
+  );
+}
+
 function TopBar(props: {
   onBack?: () => void;
   route: AppRoute;
@@ -1574,7 +2256,13 @@ function TopBar(props: {
 
   let title = "BrewSpot";
 
-  if (route.name === "saved") {
+  if (route.name === "community") {
+    title = "커뮤니티";
+  } else if (route.name === "ranking") {
+    title = "랭킹";
+  } else if (route.name === "homebarista") {
+    title = "홈바리스타";
+  } else if (route.name === "saved") {
     title = "저장한 카페";
   } else if (route.name === "profile") {
     title = "마이페이지";
@@ -1604,28 +2292,23 @@ function BottomNavigation(props: {
   onNavigate: (route: AppRoute) => void;
 }) {
   const { currentRoute, onNavigate } = props;
+  const isLoungeRoute =
+    currentRoute.name === "community" ||
+    currentRoute.name === "ranking" ||
+    currentRoute.name === "homebarista";
 
   return (
     <nav className="bottom-nav">
-      <button
-        className={currentRoute.name === "home" || currentRoute.name === "cafe" ? "active" : ""}
-        onClick={() => onNavigate({ name: "home" })}
-        type="button"
-      >
+      <button className={currentRoute.name === "home" || currentRoute.name === "cafe" ? "active" : ""} onClick={() => onNavigate({ name: "home" })} type="button">
         홈
       </button>
-      <button
-        className={currentRoute.name === "saved" ? "active" : ""}
-        onClick={() => onNavigate({ name: "saved" })}
-        type="button"
-      >
+      <button className={isLoungeRoute ? "active" : ""} onClick={() => onNavigate({ name: "community" })} type="button">
+        라운지
+      </button>
+      <button className={currentRoute.name === "saved" ? "active" : ""} onClick={() => onNavigate({ name: "saved" })} type="button">
         저장
       </button>
-      <button
-        className={currentRoute.name === "profile" ? "active" : ""}
-        onClick={() => onNavigate({ name: "profile" })}
-        type="button"
-      >
+      <button className={currentRoute.name === "profile" ? "active" : ""} onClick={() => onNavigate({ name: "profile" })} type="button">
         마이
       </button>
     </nav>

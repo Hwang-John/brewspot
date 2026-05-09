@@ -1,4 +1,4 @@
-import type { AppUser, Cafe, CafeReview } from "../types";
+import type { AppUser, Cafe, CafeReview, CommunityPost, HomeBaristaPost } from "../types";
 
 export const demoUser: AppUser = {
   id: "demo-user",
@@ -129,5 +129,95 @@ export const demoReviews: CafeReview[] = [
     recommendedMenuName: "우유식빵 토스트",
     content: "빵 향이 좋아서 아침에 가기 좋고 커피도 무난하게 잘 어울려요.",
     createdAt: "2026-05-03T08:50:00+09:00"
+  }
+];
+
+export const demoCommunityPosts: CommunityPost[] = [
+  {
+    id: "community-1",
+    authorId: null,
+    authorName: "브루가이드",
+    category: "추천",
+    title: "성수에서 오래 머물기 좋은 카페 추천해요",
+    content:
+      "콘센트 자리 넉넉하고 음악이 너무 시끄럽지 않은 곳 위주로 골라봤어요. 평일 오후 기준으로는 창가보다 안쪽 긴 테이블 쪽이 훨씬 편했어요.",
+    city: "성수",
+    likeCount: 18,
+    commentCount: 4,
+    createdAt: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
+    source: "sample"
+  },
+  {
+    id: "community-2",
+    authorId: null,
+    authorName: "연남러버",
+    category: "자유",
+    title: "연남 카페 투어 동선 이렇게 잡아도 괜찮을까요?",
+    content:
+      "오후 2시쯤 시작해서 3곳 정도만 천천히 돌고 싶어요. 디저트보다는 커피 맛 중심으로 보고 있고, 이동은 도보 기준이에요.",
+    city: "연남",
+    likeCount: 9,
+    commentCount: 7,
+    createdAt: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+    source: "sample"
+  },
+  {
+    id: "community-3",
+    authorId: null,
+    authorName: "망원필터",
+    category: "질문",
+    title: "망원에서 디카페인 괜찮은 곳 있나요?",
+    content:
+      "저녁에도 부담 없이 마시고 싶어서 디카페인 원두 퀄리티 괜찮은 곳 찾고 있어요. 산미가 너무 강하지 않으면 더 좋겠습니다.",
+    city: "망원",
+    likeCount: 6,
+    commentCount: 2,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+    source: "sample"
+  }
+];
+
+export const demoHomeBaristaPosts: HomeBaristaPost[] = [
+  {
+    id: "barista-1",
+    authorId: null,
+    authorName: "브루노트",
+    brewMethod: "V60",
+    title: "성수 블렌드로 가볍게 내리는 아침 레시피",
+    beanName: "BrewSpot House Blend",
+    ratioNote: "15g : 240ml / 2분 30초",
+    tastingNote: "첫 모금은 견과류 느낌이 부드럽고, 식으면서 은은한 초콜릿 뉘앙스가 올라와요.",
+    brewNote:
+      "40ml bloom 30초 후 100ml, 180ml, 240ml 순서로 나눠 부었어요. 물줄기는 중앙보다 살짝 바깥쪽이 더 안정적이었어요.",
+    createdAt: new Date(Date.now() - 1000 * 60 * 50).toISOString(),
+    source: "sample"
+  },
+  {
+    id: "barista-2",
+    authorId: null,
+    authorName: "홈카페준",
+    brewMethod: "에어로프레스",
+    title: "산미 줄이고 단맛 살린 에어로프레스",
+    beanName: "Ethiopia Guji",
+    ratioNote: "17g : 220ml / 1분 50초",
+    tastingNote: "산미가 너무 튀지 않고 복숭아 같은 단맛이 뒤에 남아요. 점심 이후에도 부담이 적었어요.",
+    brewNote:
+      "역방향으로 1분 침출 후 천천히 20초 프레스했어요. 물 온도는 88도 쪽이 훨씬 편안했어요.",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+    source: "sample"
+  },
+  {
+    id: "barista-3",
+    authorId: null,
+    authorName: "드립메모",
+    brewMethod: "콜드브루",
+    title: "주말용 콜드브루 베이스 비율 공유",
+    beanName: "Brazil Cerrado",
+    ratioNote: "80g : 800ml / 14시간",
+    tastingNote: "우유와 섞어도 맛이 흐려지지 않고, 단맛이 둥글게 남아요.",
+    brewNote:
+      "굵은 분쇄로 냉장 침출했고, 원액 기준이라 마실 때는 얼음이나 물로 1:1 정도 희석했어요.",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+    source: "sample"
   }
 ];

@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-import type { AppUser, Cafe, CafeReview } from "../types";
+import type { AppUser, Cafe, CafeReview, CommunityPost, HomeBaristaPost } from "../types";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -68,6 +68,32 @@ type UserRecord = {
   email: string | null;
   profile_image_url: string | null;
   status: string;
+};
+
+type CommunityPostRecord = {
+  id: string;
+  user_id: string;
+  author_nickname: string;
+  board_type: string;
+  title: string;
+  content: string;
+  city: string | null;
+  like_count: number | null;
+  comment_count: number | null;
+  created_at: string;
+};
+
+type HomeBaristaPostRecord = {
+  id: string;
+  user_id: string;
+  author_nickname: string;
+  brew_method: string;
+  title: string;
+  bean_name: string;
+  ratio_note: string;
+  tasting_note: string;
+  brew_note: string;
+  created_at: string;
 };
 
 function getClient() {
@@ -159,6 +185,38 @@ function mapUser(record: UserRecord): AppUser {
     email: record.email,
     profileImageUrl: record.profile_image_url,
     status: record.status
+  };
+}
+
+function mapCommunityPost(record: CommunityPostRecord): CommunityPost {
+  return {
+    id: record.id,
+    authorId: record.user_id,
+    authorName: record.author_nickname,
+    category: record.board_type,
+    title: record.title,
+    content: record.content,
+    city: record.city ?? "동네 미정",
+    likeCount: record.like_count ?? 0,
+    commentCount: record.comment_count ?? 0,
+    createdAt: record.created_at,
+    source: "remote"
+  };
+}
+
+function mapHomeBaristaPost(record: HomeBaristaPostRecord): HomeBaristaPost {
+  return {
+    id: record.id,
+    authorId: record.user_id,
+    authorName: record.author_nickname,
+    brewMethod: record.brew_method,
+    title: record.title,
+    beanName: record.bean_name,
+    ratioNote: record.ratio_note,
+    tastingNote: record.tasting_note,
+    brewNote: record.brew_note,
+    createdAt: record.created_at,
+    source: "remote"
   };
 }
 
@@ -412,4 +470,112 @@ export async function addReview(input: {
   }
 
   return mapLegacyReview(fallback.data as unknown as LegacyReviewRecord);
+}
+
+export async function fetchCommunityPosts() {
+  const client = getClient();
+  const { data, error } = await client
+    .from("community_posts")
+    .select(
+      "id, user_id, author_nickname, board_type, title, content, city, like_count, comment_count, created_at"
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as CommunityPostRecord[] | null)?.map(mapCommunityPost) ?? [];
+}
+
+export async function addCommunityPost(input: {
+  title: string;
+  content: string;
+  category: string;
+  city: string;
+  authorNickname: string;
+}) {
+  const client = getClient();
+  const user = await getAuthUser();
+
+  if (!user) {
+    throw new Error("로그인이 필요해요.");
+  }
+
+  const { data, error } = await client
+    .from("community_posts")
+    .insert({
+      user_id: user.id,
+      author_nickname: input.authorNickname,
+      board_type: input.category,
+      title: input.title,
+      content: input.content,
+      city: input.city
+    })
+    .select(
+      "id, user_id, author_nickname, board_type, title, content, city, like_count, comment_count, created_at"
+    )
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapCommunityPost(data as CommunityPostRecord);
+}
+
+export async function fetchHomeBaristaPosts() {
+  const client = getClient();
+  const { data, error } = await client
+    .from("homebarista_posts")
+    .select(
+      "id, user_id, author_nickname, brew_method, title, bean_name, ratio_note, tasting_note, brew_note, created_at"
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as HomeBaristaPostRecord[] | null)?.map(mapHomeBaristaPost) ?? [];
+}
+
+export async function addHomeBaristaPost(input: {
+  brewMethod: string;
+  title: string;
+  beanName: string;
+  ratioNote: string;
+  tastingNote: string;
+  brewNote: string;
+  authorNickname: string;
+}) {
+  const client = getClient();
+  const user = await getAuthUser();
+
+  if (!user) {
+    throw new Error("로그인이 필요해요.");
+  }
+
+  const { data, error } = await client
+    .from("homebarista_posts")
+    .insert({
+      user_id: user.id,
+      author_nickname: input.authorNickname,
+      brew_method: input.brewMethod,
+      title: input.title,
+      bean_name: input.beanName,
+      ratio_note: input.ratioNote,
+      tasting_note: input.tastingNote,
+      brew_note: input.brewNote
+    })
+    .select(
+      "id, user_id, author_nickname, brew_method, title, bean_name, ratio_note, tasting_note, brew_note, created_at"
+    )
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapHomeBaristaPost(data as HomeBaristaPostRecord);
 }
