@@ -92,6 +92,10 @@ type AppRoute =
   | { name: "profile" }
   | { name: "cafe"; cafeId: string };
 
+function requiresAuth(route: AppRoute) {
+  return route.name === "saved" || route.name === "profile";
+}
+
 function parseHash(hash: string): AppRoute {
   const normalized = hash.replace(/^#/, "") || "/login";
   const parts = normalized.split("/").filter(Boolean);
@@ -459,11 +463,11 @@ export default function App() {
     }
 
     if (!window.location.hash) {
-      navigate(currentUser ? { name: "home" } : { name: "login" }, true);
+      navigate({ name: "home" }, true);
       return;
     }
 
-    if (!currentUser && route.name !== "login") {
+    if (!currentUser && requiresAuth(route)) {
       navigate({ name: "login" }, true);
       return;
     }
@@ -1009,6 +1013,16 @@ export default function App() {
     }
   }
 
+  function handleBottomNavigate(nextRoute: AppRoute) {
+    if (!currentUser && requiresAuth(nextRoute)) {
+      setStatusMessage("저장한 카페와 마이페이지는 로그인 후 사용할 수 있어요.");
+      navigate({ name: "login" });
+      return;
+    }
+
+    startTransition(() => navigate(nextRoute));
+  }
+
   async function handleReviewSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -1201,6 +1215,7 @@ export default function App() {
             isAuthBusy={isAuthBusy}
             nickname={nickname}
             onAuthIntentChange={setAuthIntent}
+            onBrowse={() => navigate({ name: "home" })}
             onSubmit={handleAuthSubmit}
             password={password}
             setEmail={setEmail}
@@ -1378,15 +1393,10 @@ export default function App() {
                 />
               ) : null}
             </div>
-
-            {isAuthenticated ? (
-              <BottomActionStack
-                currentRoute={route}
-                onNavigate={(nextRoute) => startTransition(() => navigate(nextRoute))}
-              />
-            ) : null}
           </>
         )}
+
+        <BottomActionStack currentRoute={route} onNavigate={handleBottomNavigate} />
       </div>
     </div>
   );
@@ -1398,6 +1408,7 @@ function LoginPage(props: {
   isAuthBusy: boolean;
   nickname: string;
   onAuthIntentChange: (value: AuthIntent) => void;
+  onBrowse: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   password: string;
   setEmail: (value: string) => void;
@@ -1411,6 +1422,7 @@ function LoginPage(props: {
     isAuthBusy,
     nickname,
     onAuthIntentChange,
+    onBrowse,
     onSubmit,
     password,
     setEmail,
@@ -1424,7 +1436,7 @@ function LoginPage(props: {
       <div className="login-hero">
         <p className="eyebrow">BrewSpot Mobile Web</p>
         <h1>카페 탐색부터 라운지 기능까지 모바일 웹으로 이어집니다.</h1>
-        <p>로그인 후 홈, 저장, 커뮤니티, 랭킹, 홈바리스타 페이지를 각각 따로 이동할 수 있어요.</p>
+        <p>로그인 없이 홈, 커뮤니티, 랭킹, 홈바리스타를 둘러볼 수 있고 저장과 마이페이지는 로그인 후 사용할 수 있어요.</p>
       </div>
 
       <div className="login-card">
@@ -1456,6 +1468,10 @@ function LoginPage(props: {
             {isAuthBusy ? "처리 중..." : authIntent === "signin" ? "이메일 로그인" : "이메일 회원가입"}
           </button>
         </form>
+
+        <button className="secondary-cta full" onClick={onBrowse} type="button">
+          로그인 없이 둘러보기
+        </button>
 
         <div className="info-panel">
           <p>{statusMessage}</p>

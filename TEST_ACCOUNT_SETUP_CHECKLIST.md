@@ -1,6 +1,6 @@
 # BrewSpot 테스트 계정 준비 체크리스트
 
-최종 기준일: 2026-05-01
+최종 기준일: 2026-05-25
 
 이 문서는 `TEST_ACCOUNTS_TEMPLATE.csv`에 정의된 15개 테스트 계정을 실제 Supabase 프로젝트에 생성하고, 앱 검증에 바로 쓸 수 있게 맞추기 위한 체크리스트다.
 
@@ -103,6 +103,12 @@ Supabase `SQL Editor`
    리뷰 작성 / 마이페이지 반영 확인
 3. `test3@brewspot.app`
    북마크 저장 / 해제 확인
+4. `test10@brewspot.app`
+   커뮤니티 글 작성 / 목록 반영 확인
+5. `test6@brewspot.app`
+   홈바리스타 글 작성 / 목록 반영 확인
+6. `test18@brewspot.app`
+   다른 계정 시점에서 읽기 / 동네 글 확인
 
 ## 8. 실패 시 먼저 볼 것
 
@@ -121,3 +127,4 @@ Supabase `SQL Editor`
 - [ ] `auth.users`와 `public.users` 간 누락 계정 없음 확인
 - [ ] 대표 테스트 계정 1개 이상 실제 로그인 성공
 - [ ] 리뷰 / 북마크 검증용 계정 역할 정리
+- [ ] 커뮤니티 / 홈바리스타 / RLS 점검용 계정 역할 정리

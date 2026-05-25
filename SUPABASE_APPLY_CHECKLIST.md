@@ -1,22 +1,25 @@
 # BrewSpot Supabase 적용 체크리스트
 
-최종 기준일: 2026-04-24
+최종 기준일: 2026-05-25
 
 ## 목적
 
 이 문서는 Supabase 콘솔에서 BrewSpot MVP 데이터를 실제 반영할 때 바로 따라갈 수 있는 실행 순서를 정리한다.
+현재 기준으로 핵심 카페 데이터 외에 `community_posts`, `homebarista_posts` 확장 테이블도 함께 확인한다.
 
 ## 준비 파일
 
 1. `SUPABASE_MINI_SCHEMA.sql`
 2. `SUPABASE_CAFE_SEED.sql`
 3. `SUPABASE_REVIEW_SEED.sql`
-4. `SUPABASE_VERIFY.sql`
-5. `TEST_ACCOUNTS_TEMPLATE.csv`
-6. `SUPABASE_RESET_CONTENT.sql`
-7. `SUPABASE_AUTH_TRIGGER_FIX.sql`
-8. `SUPABASE_AUTH_BACKFILL.sql`
-9. `TEST_ACCOUNT_SETUP_CHECKLIST.md`
+4. `SUPABASE_COMMUNITY_SEED.sql`
+5. `SUPABASE_HOMEBARISTA_SEED.sql`
+6. `SUPABASE_VERIFY.sql`
+7. `TEST_ACCOUNTS_TEMPLATE.csv`
+8. `SUPABASE_RESET_CONTENT.sql`
+9. `SUPABASE_AUTH_TRIGGER_FIX.sql`
+10. `SUPABASE_AUTH_BACKFILL.sql`
+11. `TEST_ACCOUNT_SETUP_CHECKLIST.md`
 
 ## 1. 프로젝트와 Auth 상태 확인
 
@@ -53,8 +56,10 @@ Supabase Dashboard
 3. `cafes`
 4. `reviews`
 5. `bookmarks`
+6. `community_posts`
+7. `homebarista_posts`
 
-위 5개 테이블이 존재해야 한다.
+위 7개 테이블이 존재해야 한다.
 
 ## 3. 기존 데이터 초기화 여부 판단
 
@@ -103,8 +108,8 @@ Supabase Dashboard
 
 우선 확인할 결과:
 
-1. 테이블 5개가 조회되는지
-2. `cafes`, `reviews`, `bookmarks` 컬럼이 기대값과 맞는지
+1. 테이블 7개가 조회되는지
+2. `cafes`, `reviews`, `bookmarks`, `community_posts`, `homebarista_posts` 컬럼이 기대값과 맞는지
 3. RLS 정책이 생성됐는지
 
 ## 6. 카페 시드 반영
@@ -158,6 +163,36 @@ Supabase Dashboard
 2. 리뷰 분배가 `3개 6곳 / 2개 6곳 / 1개 6곳 / 0개 6곳`
 3. 실행 전 `public.users` 테스트 계정 수가 `15`가 아니면 `SUPABASE_AUTH_BACKFILL.sql`부터 실행
 
+## 8-1. 커뮤니티 테스트 글 반영
+
+위치:
+`SQL Editor`
+
+할 일:
+
+1. `SUPABASE_COMMUNITY_SEED.sql` 실행
+
+정상 기준:
+
+1. `community_post_count >= 3`
+2. `board_type`, `title`, `city`, `author_nickname` 값이 조회됨
+3. 앱/웹 커뮤니티 탭에서 샘플 fallback이 아닌 실데이터 확인이 가능해짐
+
+## 8-2. 홈바리스타 테스트 글 반영
+
+위치:
+`SQL Editor`
+
+할 일:
+
+1. `SUPABASE_HOMEBARISTA_SEED.sql` 실행
+
+정상 기준:
+
+1. `homebarista_post_count >= 3`
+2. `brew_method`, `title`, `bean_name`, `author_nickname` 값이 조회됨
+3. 앱/웹 홈바리스타 탭에서 샘플 fallback이 아닌 실데이터 확인이 가능해짐
+
 ## 9. 최종 검증
 
 위치:
@@ -175,6 +210,14 @@ Supabase Dashboard
 4. `author_nickname is null` 또는 `recommended_menu_name is null`인 legacy review가 남아 있는지
 5. 테스트 계정 15개가 모두 조회되는지
 6. `auth.users`에만 있고 `public.users`에 없는 테스트 계정이 남아 있지 않은지
+7. `community_posts` 테이블이 조회되고 글 생성용 컬럼과 정책이 존재하는지
+8. `homebarista_posts` 테이블이 조회되고 레시피 생성용 컬럼과 정책이 존재하는지
+
+추가 메모:
+
+1. 현재 확장 기능은 앱/웹에서 fallback 데이터로도 동작하므로, 실운영 반영의 1차 완료 기준은 `테이블/정책 생성 확인`이다.
+2. 별도 시드 SQL이 아직 없으면 `community_posts`, `homebarista_posts`는 0건이어도 괜찮다.
+3. 이후 실제 운영 전에 샘플 글을 넣고 싶다면 Dashboard 또는 SQL Editor에서 수동 1~3건 테스트 입력 후 앱/웹 반영을 확인한다.
 
 ## 10. 앱 확인
 
@@ -196,6 +239,8 @@ Xcode 시뮬레이터
 1. 카페가 샘플 데이터가 아니라 Supabase 데이터로 보임
 2. 리뷰 수와 평점이 상세 화면에 반영됨
 3. 북마크가 마이페이지 저장 목록에 반영됨
+4. 커뮤니티 탭이 fallback이 아니라 Supabase 데이터 기준으로도 열릴 준비가 되어 있음
+5. 홈바리스타 탭이 fallback이 아니라 Supabase 데이터 기준으로도 열릴 준비가 되어 있음
 
 ## 11. 실패 시 우선 점검
 
@@ -205,3 +250,4 @@ Xcode 시뮬레이터
 4. legacy review가 남아 있으면 기존 `reviews` 데이터 정리 필요
 5. Google / Apple 로그인 실패 시 Provider 활성화 여부 확인
 6. 이메일 회원가입에서 DB 오류가 나면 `SUPABASE_AUTH_TRIGGER_FIX.sql` 먼저 적용
+7. 커뮤니티/홈바리스타 탭이 계속 샘플 모드라면 `community_posts`, `homebarista_posts` 테이블과 RLS 정책부터 다시 확인

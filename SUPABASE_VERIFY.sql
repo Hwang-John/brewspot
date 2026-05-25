@@ -5,7 +5,15 @@
 select table_name
 from information_schema.tables
 where table_schema = 'public'
-  and table_name in ('users', 'user_identities', 'cafes', 'reviews', 'bookmarks')
+  and table_name in (
+    'users',
+    'user_identities',
+    'cafes',
+    'reviews',
+    'bookmarks',
+    'community_posts',
+    'homebarista_posts'
+  )
 order by table_name;
 
 -- 2. cafes columns expected by the app
@@ -63,8 +71,56 @@ order by column_name;
 select schemaname, tablename, policyname, permissive, roles, cmd
 from pg_policies
 where schemaname = 'public'
-  and tablename in ('users', 'user_identities', 'cafes', 'reviews', 'bookmarks')
+  and tablename in (
+    'users',
+    'user_identities',
+    'cafes',
+    'reviews',
+    'bookmarks',
+    'community_posts',
+    'homebarista_posts'
+  )
 order by tablename, policyname;
+
+-- 5-1. community_posts columns expected by the app
+select column_name, data_type
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'community_posts'
+  and column_name in (
+    'id',
+    'user_id',
+    'author_nickname',
+    'board_type',
+    'title',
+    'content',
+    'city',
+    'like_count',
+    'comment_count',
+    'created_at',
+    'updated_at'
+  )
+order by column_name;
+
+-- 5-2. homebarista_posts columns expected by the app
+select column_name, data_type
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'homebarista_posts'
+  and column_name in (
+    'id',
+    'user_id',
+    'author_nickname',
+    'brew_method',
+    'title',
+    'bean_name',
+    'ratio_note',
+    'tasting_note',
+    'brew_note',
+    'created_at',
+    'updated_at'
+  )
+order by column_name;
 
 -- 6. Cafe seed count
 select count(*) as cafe_count
@@ -165,5 +221,25 @@ order by au.email;
 -- 14. Seed preview
 select id, name, category, city, price_note
 from public.cafes
+order by created_at desc
+limit 10;
+
+-- 15. Community post count
+select count(*) as community_post_count
+from public.community_posts;
+
+-- 16. Home barista post count
+select count(*) as homebarista_post_count
+from public.homebarista_posts;
+
+-- 17. Community preview
+select id, author_nickname, board_type, title, city, created_at
+from public.community_posts
+order by created_at desc
+limit 10;
+
+-- 18. Home barista preview
+select id, author_nickname, brew_method, title, bean_name, created_at
+from public.homebarista_posts
 order by created_at desc
 limit 10;
