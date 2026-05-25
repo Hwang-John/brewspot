@@ -23,7 +23,8 @@
 9. `SUPABASE_REVIEW_SEED.sql` 실행
 10. `SUPABASE_VERIFY.sql` 실행
 11. `community_posts`, `homebarista_posts` 테이블과 정책 존재 여부 확인
-12. 필요 시 테스트용 글 1~3건 수동 입력 후 앱/웹 반영 확인
+12. `SUPABASE_RLS_SMOKE_TEST.sql` 실행으로 공개 읽기 / 본인 쓰기 / 타인 수정 차단 확인
+13. 필요 시 테스트용 글 1~3건 수동 입력 후 앱/웹 반영 확인
 
 Codex 작업:
 1. 실행 순서 문서 정리
@@ -38,6 +39,7 @@ Codex 작업:
 4. `auth.users`에만 있고 `public.users`에 없는 테스트 계정 없음
 5. legacy review 정리 확인
 6. `community_posts`, `homebarista_posts` 테이블 존재 확인
+7. `SUPABASE_RLS_SMOKE_TEST.sql` 결과가 모두 정상
 
 관련 문서:
 1. `SUPABASE_APPLY_CHECKLIST.md`

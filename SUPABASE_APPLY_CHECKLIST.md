@@ -15,11 +15,12 @@
 4. `SUPABASE_COMMUNITY_SEED.sql`
 5. `SUPABASE_HOMEBARISTA_SEED.sql`
 6. `SUPABASE_VERIFY.sql`
-7. `TEST_ACCOUNTS_TEMPLATE.csv`
-8. `SUPABASE_RESET_CONTENT.sql`
-9. `SUPABASE_AUTH_TRIGGER_FIX.sql`
-10. `SUPABASE_AUTH_BACKFILL.sql`
-11. `TEST_ACCOUNT_SETUP_CHECKLIST.md`
+7. `SUPABASE_RLS_SMOKE_TEST.sql`
+8. `TEST_ACCOUNTS_TEMPLATE.csv`
+9. `SUPABASE_RESET_CONTENT.sql`
+10. `SUPABASE_AUTH_TRIGGER_FIX.sql`
+11. `SUPABASE_AUTH_BACKFILL.sql`
+12. `TEST_ACCOUNT_SETUP_CHECKLIST.md`
 
 ## 1. 프로젝트와 Auth 상태 확인
 
@@ -218,6 +219,25 @@ Supabase Dashboard
 1. 현재 확장 기능은 앱/웹에서 fallback 데이터로도 동작하므로, 실운영 반영의 1차 완료 기준은 `테이블/정책 생성 확인`이다.
 2. 별도 시드 SQL이 아직 없으면 `community_posts`, `homebarista_posts`는 0건이어도 괜찮다.
 3. 이후 실제 운영 전에 샘플 글을 넣고 싶다면 Dashboard 또는 SQL Editor에서 수동 1~3건 테스트 입력 후 앱/웹 반영을 확인한다.
+
+## 9-1. RLS 스모크 테스트
+
+위치:
+`SQL Editor`
+
+할 일:
+
+1. `SUPABASE_RLS_SMOKE_TEST.sql` 실행
+2. 결과 표에서 `passed = true`인지 확인
+3. NOTICE 로그에 `PASS:` 문구만 보이는지 확인
+4. 마지막 `rollback`으로 테스트 데이터가 남지 않는지 확인
+
+정상 기준:
+
+1. anon은 `cafes`, `reviews`, `community_posts`, `homebarista_posts`를 읽을 수 있음
+2. anon은 `bookmarks`를 읽지 못하고 커뮤니티 글을 쓰지 못함
+3. authenticated는 본인 `reviews`, `bookmarks`, `community_posts`, `homebarista_posts` 쓰기가 가능함
+4. authenticated는 다른 사용자 `community_posts`, `homebarista_posts`에 쓰기/수정하지 못함
 
 ## 10. 앱 확인
 

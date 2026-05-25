@@ -107,17 +107,19 @@
 - v `SUPABASE_MINI_SCHEMA.sql`에서 legacy 샘플 카페 시드 제거
 - v `community_posts`, `homebarista_posts` 확장 테이블 / RLS / 검증 기준 로컬 문서 반영
 - v `SUPABASE_COMMUNITY_SEED.sql`, `SUPABASE_HOMEBARISTA_SEED.sql` 테스트 글 시드 SQL 추가
+- v `SUPABASE_RLS_SMOKE_TEST.sql`과 RLS 스모크 테스트 체크리스트 추가
 
 외부 확인 필요:
 - v Supabase 프로젝트에 최신 `SUPABASE_MINI_SCHEMA.sql` 실제 반영
 - v `SUPABASE_VERIFY.sql` 실행으로 컬럼 / 정책 / 시드 상태 점검
 - v 카페 시드 24개 이상 실제 입력
 - v 테스트 리뷰 36개 실제 입력 확인
-- [ ] RLS 정책이 iOS 앱 요청 흐름과 충돌 없는지 검증
+- v `SUPABASE_RLS_SMOKE_TEST.sql` 실행으로 공개 읽기 / 본인 쓰기 / 타인 수정 차단 기본 검증 확인
+- [ ] 앱 로그인 QA 기준으로 RLS 정책이 iOS 앱 요청 흐름과 충돌 없는지 최종 확인
 - v 기존 `cafes` 9개 불일치 상태를 정리하고 24개 기준선으로 재확인
 - v 현재 Supabase 리뷰 데이터의 legacy / 최신 형식 혼재 여부 정리
 - v `SUPABASE_AUTH_BACKFILL.sql` 실행 포함 기준으로 `public.users` 테스트 계정 누락 정리 후 리뷰 36개 반영 확인
-- [ ] `community_posts`, `homebarista_posts` 테이블과 RLS 정책 실제 반영 확인
+- v `community_posts`, `homebarista_posts` 테이블과 RLS 정책 실제 반영 확인
 - [ ] 커뮤니티 / 홈바리스타용 테스트 글 1~3건 실제 입력 후 앱/웹 반영 확인
 - [ ] 커뮤니티 / 랭킹 / 홈바리스타 / RLS 수동 QA 완료
 
